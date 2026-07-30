@@ -17,4 +17,3 @@ For help getting started with Fluttesr development, view the
 samples, guidance on mobile development, and a full API reference.
 
 đã sửa validation ko thể tạo/tham session hoặc appointment nếu có lịch
-cần fix mentee sesion detail

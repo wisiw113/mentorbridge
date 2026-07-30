@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +8,8 @@ import 'package:flutter_application_1/models/session_model.dart';
 import 'package:flutter_application_1/services/session_service.dart';
 
 import 'package:flutter_application_1/widgets/session/session_info_card.dart';
+import 'package:flutter_application_1/widgets/session/session_detail/session_document_card.dart';
+import 'package:flutter_application_1/widgets/session/session_detail/session_participant_actions.dart';
 
 class MenteeSessionDetailScreen extends StatefulWidget {
   final SessionModel session;
@@ -37,7 +40,9 @@ class _MenteeSessionDetailScreenState
     _checkJoined();
   }
 
-  // ================= CHECK JOINED =================
+  // =========================================================
+  // CHECK JOINED
+  // =========================================================
 
   Future<void> _checkJoined() async {
     final user =
@@ -68,7 +73,9 @@ class _MenteeSessionDetailScreenState
     }
   }
 
-  // ================= OPEN DOCUMENT =================
+  // =========================================================
+  // OPEN DOCUMENT
+  // =========================================================
 
   Future<void> _openDocument() async {
     if (session.fileUrl == null ||
@@ -146,7 +153,9 @@ class _MenteeSessionDetailScreenState
     }
   }
 
-  // ================= JOIN =================
+  // =========================================================
+  // JOIN SESSION
+  // =========================================================
 
   Future<void> _joinSession() async {
     final user =
@@ -165,19 +174,17 @@ class _MenteeSessionDetailScreenState
       );
       return;
     }
-
-    if (session.bookedSlots >=
-        session.maxSlots) {
-      _showMessage(
-        "Session đã đầy.",
-      );
-      return;
-    }
-
     if (session.status.toLowerCase() !=
         "open") {
       _showMessage(
         "Session hiện không thể tham gia.",
+      );
+      return;
+    }
+
+    if (_isFull) {
+      _showMessage(
+        "Session đã đầy.",
       );
       return;
     }
@@ -193,7 +200,8 @@ class _MenteeSessionDetailScreenState
               .doc(user.uid)
               .get();
 
-      final data = userDoc.data();
+      final data =
+          userDoc.data();
 
       final String menteeName =
           (data?["name"] ?? "")
@@ -240,7 +248,9 @@ class _MenteeSessionDetailScreenState
     }
   }
 
-  // ================= LEAVE =================
+  // =========================================================
+  // LEAVE SESSION
+  // =========================================================
 
   Future<void> _leaveSession() async {
     final user =
@@ -249,6 +259,14 @@ class _MenteeSessionDetailScreenState
     if (user == null) {
       _showMessage(
         "Vui lòng đăng nhập.",
+      );
+      return;
+    }
+
+    // Không cho Leave nếu session đã kết thúc
+    if (_isSessionFinished) {
+      _showMessage(
+        "Không thể rời Session đã kết thúc.",
       );
       return;
     }
@@ -347,7 +365,9 @@ class _MenteeSessionDetailScreenState
     }
   }
 
-  // ================= GET PARTICIPANT =================
+  // =========================================================
+  // GET PARTICIPANT ID
+  // =========================================================
 
   Future<String?> _getParticipantId() async {
     final user =
@@ -371,6 +391,10 @@ class _MenteeSessionDetailScreenState
                 "menteeId",
                 isEqualTo: user.uid,
               )
+              .where(
+                "status",
+                isEqualTo: "joined",
+              )
               .limit(1)
               .get();
 
@@ -388,7 +412,26 @@ class _MenteeSessionDetailScreenState
     }
   }
 
-  // ================= MESSAGE =================
+  // =========================================================
+  // HELPERS
+  // =========================================================
+
+  bool get _isFull {
+    return session.bookedSlots >=
+        session.maxSlots;
+  }
+
+  bool get _isSessionFinished {
+    final status =
+        session.status.toLowerCase();
+
+    return status == "completed" ||
+        status == "cancelled";
+  }
+
+  // =========================================================
+  // MESSAGE
+  // =========================================================
 
   void _showMessage(
     String message,
@@ -406,14 +449,9 @@ class _MenteeSessionDetailScreenState
       );
   }
 
-  // ================= CHECK FULL =================
-
-  bool get _isFull {
-    return session.bookedSlots >=
-        session.maxSlots;
-  }
-
-  // ================= BUILD =================
+  // =========================================================
+  // BUILD
+  // =========================================================
 
   @override
   Widget build(
@@ -428,7 +466,9 @@ class _MenteeSessionDetailScreenState
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ================= SESSION INFO =================
+            // =================================================
+            // SESSION INFO
+            // =================================================
 
             SessionInfoCard(
               title: session.title,
@@ -449,233 +489,46 @@ class _MenteeSessionDetailScreenState
                   session.status,
             ),
 
-            // ================= DOCUMENT =================
+            // =================================================
+            // DOCUMENT
+            // =================================================
 
             if (session.fileUrl != null &&
                 session.fileUrl!.isNotEmpty)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Card(
-                  elevation: 1,
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                      12,
-                    ),
-                  ),
-                  child: ListTile(
-                    leading: Container(
-                      padding:
-                          const EdgeInsets.all(
-                        10,
-                      ),
-                      decoration:
-                          BoxDecoration(
-                        color: Colors.green
-                            .withOpacity(
-                          0.1,
-                        ),
-                        borderRadius:
-                            BorderRadius.circular(
-                          10,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons
-                            .description_outlined,
-                        color: Colors.green,
-                      ),
-                    ),
-                    title: Text(
-                      session.fileName ??
-                          "Session Document",
-                      maxLines: 1,
-                      overflow:
-                          TextOverflow.ellipsis,
-                      style:
-                          const TextStyle(
-                        fontWeight:
-                            FontWeight.w600,
-                      ),
-                    ),
-                    subtitle:
-                        const Text(
-                      "Nhấn để mở tài liệu",
-                    ),
-                    trailing:
-                        const Icon(
-                      Icons
-                          .download_outlined,
-                    ),
-                    onTap:
-                        _openDocument,
-                  ),
-                ),
+              SessionDocumentCard(
+                fileName:
+                    session.fileName,
+                onTap:
+                    _openDocument,
               ),
 
-            const SizedBox(height: 10),
-
-            // ================= ACTION =================
-
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 16,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child:
-                    _buildActionButton(),
-              ),
+            const SizedBox(
+              height: 10,
             ),
 
-            const SizedBox(height: 30),
+            // =================================================
+            // PARTICIPANT ACTIONS
+            // =================================================
+
+            SessionParticipantActions(
+              isLoading:
+                  _isLoading,
+              isJoined:
+                  _isJoined,
+              isFull:
+                  _isFull,
+              status:
+                  session.status,
+              onJoin:
+                  _joinSession,
+              onLeave:
+                  _leaveSession,
+            ),
+
+            const SizedBox(
+              height: 30,
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  // ================= ACTION BUTTON =================
-
-  Widget _buildActionButton() {
-    if (_isLoading) {
-      return const SizedBox(
-        height: 52,
-        child: Center(
-          child:
-              CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (_isJoined) {
-      return ElevatedButton.icon(
-        onPressed:
-            _leaveSession,
-        icon: const Icon(
-          Icons.exit_to_app,
-        ),
-        label: const Text(
-          "Leave Session",
-        ),
-        style:
-            ElevatedButton.styleFrom(
-          minimumSize:
-              const Size(
-            double.infinity,
-            52,
-          ),
-          backgroundColor:
-              Colors.red,
-          foregroundColor:
-              Colors.white,
-          shape:
-              RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(
-              12,
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (_isFull) {
-      return ElevatedButton.icon(
-        onPressed: null,
-        icon: const Icon(
-          Icons.group,
-        ),
-        label: const Text(
-          "Session Full",
-        ),
-        style:
-            ElevatedButton.styleFrom(
-          minimumSize:
-              const Size(
-            double.infinity,
-            52,
-          ),
-        ),
-      );
-    }
-
-    if (session.status
-            .toLowerCase() ==
-        "completed") {
-      return ElevatedButton.icon(
-        onPressed: null,
-        icon: const Icon(
-          Icons.check_circle,
-        ),
-        label: const Text(
-          "Session Completed",
-        ),
-        style:
-            ElevatedButton.styleFrom(
-          minimumSize:
-              const Size(
-            double.infinity,
-            52,
-          ),
-        ),
-      );
-    }
-
-    if (session.status
-            .toLowerCase() ==
-        "cancelled") {
-      return ElevatedButton.icon(
-        onPressed: null,
-        icon: const Icon(
-          Icons.cancel,
-        ),
-        label: const Text(
-          "Session Cancelled",
-        ),
-        style:
-            ElevatedButton.styleFrom(
-          minimumSize:
-              const Size(
-            double.infinity,
-            52,
-          ),
-        ),
-      );
-    }
-
-    return ElevatedButton.icon(
-      onPressed:
-          _joinSession,
-      icon: const Icon(
-        Icons.groups,
-      ),
-      label: const Text(
-        "Join Session",
-      ),
-      style:
-          ElevatedButton.styleFrom(
-        minimumSize:
-            const Size(
-          double.infinity,
-          52,
-        ),
-        backgroundColor:
-            Colors.green,
-        foregroundColor:
-            Colors.white,
-        shape:
-            RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
         ),
       ),
     );

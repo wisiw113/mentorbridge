@@ -1,325 +1,181 @@
+
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../models/session_model.dart';
-
-class SessionParticipantActions extends StatelessWidget {
-  final SessionModel session;
-
+class SessionParticipantActions
+    extends StatelessWidget {
+  final bool isLoading;
   final bool isJoined;
-  final bool loading;
+  final bool isFull;
+  final String status;
 
   final VoidCallback? onJoin;
   final VoidCallback? onLeave;
 
   const SessionParticipantActions({
     super.key,
-    required this.session,
+    required this.isLoading,
     required this.isJoined,
-    required this.loading,
-    this.onJoin,
-    this.onLeave,
+    required this.isFull,
+    required this.status,
+    required this.onJoin,
+    required this.onLeave,
   });
 
   @override
   Widget build(BuildContext context) {
-    // =========================================================
-    // SESSION ĐÃ HOÀN THÀNH HOẶC ĐÃ HỦY
-    // Không hiển thị nút Leave / Join
-    // =========================================================
-    if (session.status == 'completed' ||
-        session.status == 'cancelled') {
-      return _buildFinalStatus();
+    if (isLoading) {
+      return const SizedBox(
+        height: 52,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
-    // =========================================================
-    // SESSION ĐANG CHẠY
-    // Không cho Join / Leave
-    // =========================================================
-    if (session.status == 'running') {
-      if (isJoined) {
-        return _buildRunningStatus();
-      }
+    final normalizedStatus =
+        status.toLowerCase();
 
-      return const SizedBox.shrink();
+    // =========================
+    // COMPLETED
+    // =========================
+
+    if (normalizedStatus == "completed") {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const Icon(
+          Icons.check_circle,
+        ),
+        label: const Text(
+          "Session Completed",
+        ),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(
+            double.infinity,
+            52,
+          ),
+        ),
+      );
     }
 
-    // =========================================================
-    // SESSION ĐÃ ĐẦY
-    // Nếu đã tham gia thì vẫn hiển thị trạng thái Joined
-    // Nếu chưa tham gia thì không cho Join
-    // =========================================================
-    if (session.status == 'full' &&
-        !isJoined) {
-      return _buildFullStatus();
+    // =========================
+    // CANCELLED
+    // =========================
+
+    if (normalizedStatus == "cancelled") {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const Icon(
+          Icons.cancel,
+        ),
+        label: const Text(
+          "Session Cancelled",
+        ),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(
+            double.infinity,
+            52,
+          ),
+        ),
+      );
     }
 
-    // =========================================================
-    // MENTEE ĐÃ THAM GIA
-    // Hiển thị nút Leave
-    // =========================================================
+    // =========================
+    // JOINED
+    // =========================
+
     if (isJoined) {
-      return _buildLeaveButton();
+      return ElevatedButton.icon(
+        onPressed: onLeave,
+        icon: const Icon(
+          Icons.exit_to_app,
+        ),
+        label: const Text(
+          "Leave Session",
+        ),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(
+            double.infinity,
+            52,
+          ),
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(12),
+          ),
+        ),
+      );
     }
 
-    // =========================================================
-    // SESSION ĐANG OPEN
-    // Hiển thị nút Join
-    // =========================================================
-    if (session.status == 'open') {
-      return _buildJoinButton();
+    // =========================
+    // FULL
+    // =========================
+
+    if (isFull) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const Icon(
+          Icons.group,
+        ),
+        label: const Text(
+          "Session Full",
+        ),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(
+            double.infinity,
+            52,
+          ),
+        ),
+      );
     }
 
-    return const SizedBox.shrink();
-  }
+    // =========================
+    // NOT OPEN
+    // =========================
 
-  // =========================================================
-  // JOIN BUTTON
-  // =========================================================
-
-  Widget _buildJoinButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: loading ? null : onJoin,
-          icon: loading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(
-                  Icons.group_add_outlined,
-                ),
-          label: Text(
-            loading
-                ? 'Joining...'
-                : 'Join Session',
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                AppColors.deepGreen,
-            foregroundColor: Colors.white,
-            padding:
-                const EdgeInsets.symmetric(
-              vertical: 14,
-            ),
-            shape:
-                RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(12),
-            ),
+    if (normalizedStatus != "open") {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const Icon(
+          Icons.block,
+        ),
+        label: const Text(
+          "Session Unavailable",
+        ),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(
+            double.infinity,
+            52,
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  // =========================================================
-  // LEAVE BUTTON
-  // =========================================================
+    // =========================
+    // JOIN
+    // =========================
 
-  Widget _buildLeaveButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
+    return ElevatedButton.icon(
+      onPressed: onJoin,
+      icon: const Icon(
+        Icons.groups,
       ),
-      child: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed:
-              loading ? null : onLeave,
-          icon: const Icon(
-            Icons.logout_outlined,
-          ),
-          label: Text(
-            loading
-                ? 'Processing...'
-                : 'Leave Session',
-          ),
-          style:
-              OutlinedButton.styleFrom(
-            foregroundColor:
-                Colors.red,
-            side: const BorderSide(
-              color: Colors.red,
-            ),
-            padding:
-                const EdgeInsets.symmetric(
-              vertical: 14,
-            ),
-            shape:
-                RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(12),
-            ),
-          ),
+      label: const Text(
+        "Join Session",
+      ),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(
+          double.infinity,
+          52,
         ),
-      ),
-    );
-  }
-
-  // =========================================================
-  // SESSION FULL
-  // =========================================================
-
-  Widget _buildFullStatus() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ),
-      child: Container(
-        width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 16,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.orange
-              .withOpacity(0.1),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
           borderRadius:
               BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.orange
-                .withOpacity(0.4),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.groups_outlined,
-              color: Colors.orange,
-            ),
-            SizedBox(width: 8),
-            Text(
-              'Session is full',
-              style: TextStyle(
-                color: Colors.orange,
-                fontWeight:
-                    FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // =========================================================
-  // RUNNING STATUS
-  // =========================================================
-
-  Widget _buildRunningStatus() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ),
-      child: Container(
-        width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 16,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.deepGreen
-              .withOpacity(0.1),
-          borderRadius:
-              BorderRadius.circular(12),
-        ),
-        child: const Row(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.play_circle_outline,
-              color: AppColors.deepGreen,
-            ),
-            SizedBox(width: 8),
-            Text(
-              'Session is currently running',
-              style: TextStyle(
-                color: AppColors.deepGreen,
-                fontWeight:
-                    FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // =========================================================
-  // COMPLETED / CANCELLED
-  // =========================================================
-
-  Widget _buildFinalStatus() {
-    final bool isCompleted =
-        session.status == 'completed';
-
-    final Color statusColor =
-        isCompleted
-            ? AppColors.completed
-            : AppColors.cancelled;
-
-    final IconData icon =
-        isCompleted
-            ? Icons.check_circle_outline
-            : Icons.cancel_outlined;
-
-    final String text =
-        isCompleted
-            ? 'Session completed'
-            : 'Session cancelled';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ),
-      child: Container(
-        width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 16,
-        ),
-        decoration: BoxDecoration(
-          color: statusColor
-              .withOpacity(0.1),
-          borderRadius:
-              BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: statusColor,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              text,
-              style: TextStyle(
-                color: statusColor,
-                fontWeight:
-                    FontWeight.w600,
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 }
+
