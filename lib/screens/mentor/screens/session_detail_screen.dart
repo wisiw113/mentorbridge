@@ -1,16 +1,22 @@
+
 import 'package:flutter/material.dart';
 
 import 'package:flutter_application_1/models/session_model.dart';
 import 'package:flutter_application_1/services/session_service.dart';
+import 'package:flutter_application_1/services/session_rating_service.dart';
 
 import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_info_card.dart';
+
 import 'package:flutter_application_1/widgets/session/session_detail/session_document_card.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_management_buttons.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_participants_header.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_participants_list.dart';
 
-class SessionDetailScreen
-    extends StatefulWidget {
+// Rating widgets
+import 'package:flutter_application_1/widgets/session/session_detail/session_rating_list.dart';
+import 'package:flutter_application_1/widgets/session/session_detail/session_rating_summary_card.dart';
+
+class SessionDetailScreen extends StatefulWidget {
   final SessionModel session;
 
   const SessionDetailScreen({
@@ -19,16 +25,17 @@ class SessionDetailScreen
   });
 
   @override
-  State<SessionDetailScreen>
-      createState() =>
-          _SessionDetailScreenState();
+  State<SessionDetailScreen> createState() =>
+      _SessionDetailScreenState();
 }
 
 class _SessionDetailScreenState
     extends State<SessionDetailScreen> {
-  final SessionService
-      _sessionService =
+  final SessionService _sessionService =
       SessionService();
+
+  final SessionRatingService _ratingService =
+      SessionRatingService();
 
   late SessionModel session;
 
@@ -38,27 +45,23 @@ class _SessionDetailScreenState
   void initState() {
     super.initState();
 
-    session =
-        widget.session;
+    session = widget.session;
 
     _refreshSession();
   }
 
   // =========================================================
-  // REFRESH SESSION STATUS
+  // REFRESH SESSION
   // =========================================================
 
-  Future<void>
-      _refreshSession() async {
+  Future<void> _refreshSession() async {
     try {
       final updated =
-          await _sessionService
-              .getSession(
+          await _sessionService.getSession(
         session.id,
       );
 
-      if (!mounted ||
-          updated == null) {
+      if (!mounted || updated == null) {
         return;
       }
 
@@ -66,8 +69,7 @@ class _SessionDetailScreenState
         session = updated;
       });
     } catch (_) {
-      // Không cần hiển thị lỗi
-      // vì màn hình vẫn có dữ liệu cũ
+      // Giữ dữ liệu cũ nếu refresh lỗi
     }
   }
 
@@ -75,19 +77,16 @@ class _SessionDetailScreenState
   // CANCEL SESSION
   // =========================================================
 
-  Future<void>
-      _cancelSession() async {
+  Future<void> _cancelSession() async {
     final confirm =
         await showDialog<bool>(
       context: context,
-      builder:
-          (context) {
+      builder: (context) {
         return AlertDialog(
           title: const Text(
             "Cancel Session",
           ),
-          content:
-              const Text(
+          content: const Text(
             "Bạn có chắc chắn muốn hủy Session này không?",
           ),
           actions: [
@@ -98,11 +97,11 @@ class _SessionDetailScreenState
                   false,
                 );
               },
-              child:
-                  const Text(
+              child: const Text(
                 "No",
               ),
             ),
+
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(
@@ -111,15 +110,13 @@ class _SessionDetailScreenState
                 );
               },
               style:
-                  ElevatedButton
-                      .styleFrom(
+                  ElevatedButton.styleFrom(
                 backgroundColor:
                     Colors.red,
                 foregroundColor:
                     Colors.white,
               ),
-              child:
-                  const Text(
+              child: const Text(
                 "Yes, Cancel",
               ),
             ),
@@ -137,8 +134,7 @@ class _SessionDetailScreenState
     });
 
     try {
-      await _sessionService
-          .cancelSession(
+      await _sessionService.cancelSession(
         session.id,
       );
 
@@ -170,9 +166,7 @@ class _SessionDetailScreenState
       ).showSnackBar(
         SnackBar(
           content: Text(
-            e
-                .toString()
-                .replaceFirst(
+            e.toString().replaceFirst(
                   "Exception: ",
                   "",
                 ),
@@ -193,45 +187,43 @@ class _SessionDetailScreenState
   // =========================================================
 
   bool get canCancel {
-    return session.status ==
-        "open";
+    return session.status.toLowerCase() == "open";
   }
 
+  // =========================================================
+  // BUILD
+  // =========================================================
+
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor:
-          const Color(
-        0xFFECFDF5,
-      ),
+          const Color(0xFFECFDF5),
+
       appBar: AppBar(
-        title:
-            const Text(
+        title: const Text(
           "Session Detail",
         ),
         backgroundColor:
-            const Color(
-          0xFF047857,
-        ),
+            const Color(0xFF047857),
         foregroundColor:
             Colors.white,
         elevation: 0,
       ),
-      body:
-          RefreshIndicator(
-        onRefresh:
-            _refreshSession,
-        child:
-            SingleChildScrollView(
+
+      body: RefreshIndicator(
+        onRefresh: _refreshSession,
+
+        child: SingleChildScrollView(
           physics:
               const AlwaysScrollableScrollPhysics(),
-          child:
-              Column(
+
+          child: Column(
             crossAxisAlignment:
                 CrossAxisAlignment.start,
+
             children: [
+
               // =================================================
               // SESSION INFO
               // =================================================
@@ -239,20 +231,28 @@ class _SessionDetailScreenState
               SessionInfoCard(
                 title:
                     session.title,
+
                 description:
                     session.description,
+
                 mentorName:
                     session.mentorName,
+
                 date:
                     session.date,
+
                 startTime:
                     session.startTime,
+
                 endTime:
                     session.endTime,
+
                 bookedSlots:
                     session.bookedSlots,
+
                 maxSlots:
                     session.maxSlots,
+
                 status:
                     session.status,
               ),
@@ -261,16 +261,15 @@ class _SessionDetailScreenState
               // DOCUMENT
               // =================================================
 
-              if (session.fileUrl !=
-                      null &&
-                  session.fileUrl!
-                      .isNotEmpty)
+              if (session.fileUrl != null &&
+                  session.fileUrl!.isNotEmpty)
+
                 SessionDocumentCard(
                   fileName:
                       session.fileName,
+
                   onTap: () {
-                    // Xử lý mở / tải file
-                    // bằng logic hiện tại
+                    // Xử lý mở tài liệu
                   },
                 ),
 
@@ -285,6 +284,7 @@ class _SessionDetailScreenState
               SessionParticipantsHeader(
                 bookedSlots:
                     session.bookedSlots,
+
                 maxSlots:
                     session.maxSlots,
               ),
@@ -294,12 +294,172 @@ class _SessionDetailScreenState
               ),
 
               // =================================================
-              // PARTICIPANTS
+              // PARTICIPANTS LIST
               // =================================================
 
               SessionParticipantsList(
                 sessionId:
                     session.id,
+              ),
+
+              const SizedBox(
+                height: 20,
+              ),
+
+              // =================================================
+              // SESSION RATINGS
+              // =================================================
+
+              StreamBuilder(
+                stream:
+                    _ratingService
+                        .getSessionRatings(
+                  session.id,
+                ),
+
+                builder: (
+                  context,
+                  snapshot,
+                ) {
+
+                  // =================================================
+                  // LOADING
+                  // =================================================
+
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+
+                    return const Padding(
+                      padding:
+                          EdgeInsets.all(30),
+
+                      child: Center(
+                        child:
+                            CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  // =================================================
+                  // ERROR
+                  // =================================================
+
+                  if (snapshot.hasError) {
+
+                    return Padding(
+                      padding:
+                          const EdgeInsets.all(20),
+
+                      child: Container(
+                        width:
+                            double.infinity,
+
+                        padding:
+                            const EdgeInsets.all(16),
+
+                        decoration:
+                            BoxDecoration(
+                          color:
+                              Colors.red
+                                  .withOpacity(0.08),
+
+                          borderRadius:
+                              BorderRadius.circular(12),
+                        ),
+
+                        child: Row(
+                          children: [
+
+                            const Icon(
+                              Icons.error_outline,
+                              color:
+                                  Colors.red,
+                            ),
+
+                            const SizedBox(
+                              width: 10,
+                            ),
+
+                            Expanded(
+                              child: Text(
+                                "Không thể tải đánh giá Session.",
+                                style:
+                                    TextStyle(
+                                  color:
+                                      Colors.red
+                                          .shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  // =================================================
+                  // GET RATINGS
+                  // =================================================
+
+                  final ratings =
+                      snapshot.data ?? [];
+
+                  // =================================================
+                  // CALCULATE AVERAGE
+                  // =================================================
+
+                  double averageRating = 0.0;
+
+                  if (ratings.isNotEmpty) {
+
+                    double totalRating = 0.0;
+
+                    for (final rating
+                        in ratings) {
+
+                      totalRating +=
+                          rating.rating;
+                    }
+
+                    averageRating =
+                        totalRating /
+                            ratings.length;
+                  }
+
+                  // =================================================
+                  // RATING UI
+                  // =================================================
+
+                  return Column(
+                    children: [
+
+                      // =================================================
+                      // RATING SUMMARY
+                      // =================================================
+
+                      SessionRatingSummaryCard(
+                        averageRating:
+                            averageRating,
+
+                        reviewCount:
+                            ratings.length,
+                      ),
+
+                      const SizedBox(
+                        height: 10,
+                      ),
+
+                      // =================================================
+                      // RATING LIST
+                      // =================================================
+
+                      SessionRatingList(
+                        ratings:
+                            ratings,
+                      ),
+                    ],
+                  );
+                },
               ),
 
               const SizedBox(
@@ -313,8 +473,10 @@ class _SessionDetailScreenState
               SessionManagementButtons(
                 visible:
                     canCancel,
+
                 loading:
                     loading,
+
                 onCancel:
                     _cancelSession,
               ),
@@ -329,3 +491,4 @@ class _SessionDetailScreenState
     );
   }
 }
+

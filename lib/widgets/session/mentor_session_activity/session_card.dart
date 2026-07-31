@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -14,6 +15,13 @@ class SessionCard extends StatelessWidget {
 
   final String status;
 
+  // =========================
+  // RATING
+  // =========================
+
+  final double averageRating;
+  final int reviewCount;
+
   final VoidCallback? onTap;
   final VoidCallback? onJoin;
 
@@ -27,6 +35,11 @@ class SessionCard extends StatelessWidget {
     required this.bookedSlots,
     required this.maxSlots,
     required this.status,
+
+    // Rating mặc định để không bắt buộc
+    this.averageRating = 0.0,
+    this.reviewCount = 0,
+
     this.onTap,
     this.onJoin,
   });
@@ -53,7 +66,10 @@ class SessionCard extends StatelessWidget {
     }
 
     final double percent =
-        maxSlots == 0 ? 0 : bookedSlots / maxSlots;
+        maxSlots == 0
+            ? 0
+            : (bookedSlots / maxSlots)
+                .clamp(0.0, 1.0);
 
     final bool canJoin =
         onJoin != null &&
@@ -68,177 +84,360 @@ class SessionCard extends StatelessWidget {
         vertical: 6,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius:
+            BorderRadius.circular(14),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius:
+            BorderRadius.circular(14),
         onTap: onTap,
+
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding:
+              const EdgeInsets.all(14),
+
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+
             children: [
+
+              // =========================
               // TITLE
+              // =========================
+
               Text(
                 title,
                 style: const TextStyle(
                   fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.deepGreen,
+                  fontWeight:
+                      FontWeight.bold,
+                  color:
+                      AppColors.deepGreen,
                 ),
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(
+                height: 6,
+              ),
 
+              // =========================
               // DESCRIPTION
+              // =========================
+
               Text(
                 description,
                 maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                overflow:
+                    TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: AppColors.gray,
+                  color:
+                      AppColors.gray,
                   fontSize: 13,
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(
+                height: 10,
+              ),
 
+              // =========================
+              // RATING
+              // =========================
+
+              if (reviewCount > 0)
+                Row(
+                  children: [
+
+                    const Icon(
+                      Icons.star_rounded,
+                      color: Colors.amber,
+                      size: 20,
+                    ),
+
+                    const SizedBox(
+                      width: 4,
+                    ),
+
+                    Text(
+                      averageRating
+                          .toStringAsFixed(1),
+                      style:
+                          const TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            FontWeight.bold,
+                        color:
+                            AppColors.darkGray,
+                      ),
+                    ),
+
+                    const SizedBox(
+                      width: 5,
+                    ),
+
+                    Text(
+                      "($reviewCount đánh giá)",
+                      style:
+                          const TextStyle(
+                        fontSize: 12,
+                        color:
+                            AppColors.gray,
+                      ),
+                    ),
+                  ],
+                ),
+
+              // Nếu chưa có đánh giá
+              if (reviewCount == 0)
+                const Row(
+                  children: [
+
+                    Icon(
+                      Icons.star_border_rounded,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+
+                    SizedBox(
+                      width: 4,
+                    ),
+
+                    Text(
+                      "Chưa có đánh giá",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            AppColors.gray,
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(
+                height: 12,
+              ),
+
+              // =========================
               // DATE
+              // =========================
+
               Row(
                 children: [
+
                   const Icon(
                     Icons.calendar_month,
                     size: 18,
-                    color: AppColors.mintGreen,
+                    color:
+                        AppColors.mintGreen,
                   ),
-                  const SizedBox(width: 8),
+
+                  const SizedBox(
+                    width: 8,
+                  ),
+
                   Text(
                     date,
-                    style: const TextStyle(
+                    style:
+                        const TextStyle(
                       fontSize: 13,
-                      color: AppColors.darkGray,
+                      color:
+                          AppColors.darkGray,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(
+                height: 6,
+              ),
 
+              // =========================
               // TIME
+              // =========================
+
               Row(
                 children: [
+
                   const Icon(
                     Icons.schedule,
                     size: 18,
-                    color: AppColors.mintGreen,
+                    color:
+                        AppColors.mintGreen,
                   ),
-                  const SizedBox(width: 8),
+
+                  const SizedBox(
+                    width: 8,
+                  ),
+
                   Text(
                     "$startTime - $endTime",
-                    style: const TextStyle(
+                    style:
+                        const TextStyle(
                       fontSize: 13,
-                      color: AppColors.darkGray,
+                      color:
+                          AppColors.darkGray,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(
+                height: 14,
+              ),
 
+              // =========================
               // AVAILABLE SLOTS
+              // =========================
+
               const Text(
                 "Available Slots",
-                style: TextStyle(
+                style:
+                    TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.darkGray,
+                  fontWeight:
+                      FontWeight.w600,
+                  color:
+                      AppColors.darkGray,
                 ),
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(
+                height: 6,
+              ),
 
               LinearProgressIndicator(
                 value: percent,
                 minHeight: 6,
-                borderRadius: BorderRadius.circular(20),
-                backgroundColor: AppColors.border,
+                borderRadius:
+                    BorderRadius.circular(
+                  20,
+                ),
+                backgroundColor:
+                    AppColors.border,
                 valueColor:
                     const AlwaysStoppedAnimation(
                   AppColors.mintGreen,
                 ),
               ),
 
-              const SizedBox(height: 5),
+              const SizedBox(
+                height: 5,
+              ),
 
               Align(
-                alignment: Alignment.centerRight,
+                alignment:
+                    Alignment.centerRight,
+
                 child: Text(
                   "$bookedSlots / $maxSlots",
-                  style: const TextStyle(
+                  style:
+                      const TextStyle(
                     fontSize: 12,
-                    color: AppColors.deepGreen,
-                    fontWeight: FontWeight.bold,
+                    color:
+                        AppColors.deepGreen,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(
+                height: 12,
+              ),
 
+              // =========================
               // STATUS + JOIN
+              // =========================
+
               Row(
                 mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                    MainAxisAlignment
+                        .spaceBetween,
+
                 children: [
+
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding:
+                        const EdgeInsets
+                            .symmetric(
                       horizontal: 10,
                       vertical: 5,
                     ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(.12),
+
+                    decoration:
+                        BoxDecoration(
+                      color: statusColor
+                          .withOpacity(.12),
                       borderRadius:
-                          BorderRadius.circular(20),
-                      border: Border.all(
-                        color: statusColor.withOpacity(.35),
+                          BorderRadius
+                              .circular(
+                        20,
+                      ),
+                      border:
+                          Border.all(
+                        color: statusColor
+                            .withOpacity(
+                          .35,
+                        ),
                       ),
                     ),
+
                     child: Text(
                       status.toUpperCase(),
-                      style: TextStyle(
+                      style:
+                          TextStyle(
                         fontSize: 11,
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
+                        color:
+                            statusColor,
+                        fontWeight:
+                            FontWeight.bold,
                       ),
                     ),
                   ),
 
                   if (canJoin)
                     ElevatedButton.icon(
-                      onPressed: onJoin,
-                      style: ElevatedButton.styleFrom(
+                      onPressed:
+                          onJoin,
+
+                      style:
+                          ElevatedButton
+                              .styleFrom(
                         backgroundColor:
-                            AppColors.mintGreen,
+                            AppColors
+                                .mintGreen,
                         foregroundColor:
-                            AppColors.white,
+                            AppColors
+                                .white,
                         elevation: 0,
                         padding:
-                            const EdgeInsets.symmetric(
+                            const EdgeInsets
+                                .symmetric(
                           horizontal: 14,
                           vertical: 9,
                         ),
                         shape:
                             RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(10),
+                              BorderRadius
+                                  .circular(
+                            10,
+                          ),
                         ),
                       ),
-                      icon: const Icon(
+
+                      icon:
+                          const Icon(
                         Icons.groups,
                         size: 17,
                       ),
-                      label: const Text(
+
+                      label:
+                          const Text(
                         "Join",
-                        style: TextStyle(
+                        style:
+                            TextStyle(
                           fontSize: 13,
                         ),
                       ),
@@ -252,3 +451,4 @@ class SessionCard extends StatelessWidget {
     );
   }
 }
+
