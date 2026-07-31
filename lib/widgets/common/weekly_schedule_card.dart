@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '/core/theme/app_colors.dart';
 import '/models/schedule_item.dart';
-import '/widgets/mentor/mentor_home/weekly_schedule/week_day_row.dart';
-import '/widgets/mentor/mentor_home/weekly_schedule/week_header.dart';
+import 'weekly_schedule/week_day_row.dart';
+import 'weekly_schedule/week_header.dart';
 
 class WeeklyScheduleCard extends StatelessWidget {
   final List<ScheduleItem> schedules;

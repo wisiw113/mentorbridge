@@ -8,12 +8,12 @@ import '../../../models/session_model.dart';
 import '../../../models/schedule_item.dart';
 import '../../../services/appointment_service.dart';
 import '../../../services/session_service.dart';
-import '../../../widgets/mentor/mentor_home/greeting_card.dart';
+import '../../../widgets/common/greeting_card.dart';
 import '../../../widgets/mentor/mentor_home/request_card.dart';
 import '../../../widgets/mentor/mentor_home/summary_card.dart';
 import '../../../widgets/mentor/mentor_home/upcoming_appointment_card.dart';
 import '../../../widgets/mentor/mentor_home/upcoming_session.dart';
-import '../../../widgets/mentor/mentor_home/weekly_schedule_card.dart';
+import '../../../widgets/common/weekly_schedule_card.dart';
 import '../../../screens/mentor/screens/session_detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
@@ -97,7 +97,7 @@ class HomeTab extends StatelessWidget {
                       children: [
                         // Greeting
                         GreetingCard(
-                          mentorName: mentorName,
+                          userName: mentorName,
                         ),
 
                         const SizedBox(height: 20),

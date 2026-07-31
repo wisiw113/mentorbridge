@@ -1,13 +1,14 @@
+
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
+import '../../core/theme/app_colors.dart';
 
 class GreetingCard extends StatelessWidget {
-  final String mentorName;
+  final String userName;
 
   const GreetingCard({
     super.key,
-    required this.mentorName,
+    required this.userName,
   });
 
   @override
@@ -47,7 +48,7 @@ class GreetingCard extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 Text(
-                  mentorName,
+                  userName,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -58,7 +59,7 @@ class GreetingCard extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 const Text(
-                  "Chúc bạn có một ngày làm việc hiệu quả và nhiều cảm hứng!",
+                  "Chúc bạn có một ngày học tập và làm việc hiệu quả!",
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.darkGray,
@@ -112,3 +113,4 @@ class GreetingCard extends StatelessWidget {
     return Icons.nightlight_round;
   }
 }
+
