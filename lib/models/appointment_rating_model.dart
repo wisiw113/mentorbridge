@@ -1,6 +1,7 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class RatingModel {
+class AppointmentRatingModel {
   final String id;
 
   final String mentorId;
@@ -15,7 +16,7 @@ class RatingModel {
 
   final DateTime createdAt;
 
-  RatingModel({
+  AppointmentRatingModel({
     required this.id,
     required this.mentorId,
     required this.menteeId,
@@ -27,13 +28,13 @@ class RatingModel {
     required this.createdAt,
   });
 
-  factory RatingModel.fromMap(
+  factory AppointmentRatingModel.fromMap(
     String id,
     Map<String, dynamic> map,
   ) {
     final timestamp = map['createdAt'];
 
-    return RatingModel(
+    return AppointmentRatingModel(
       id: id,
 
       mentorId: map['mentorId'] ?? '',
@@ -71,7 +72,7 @@ class RatingModel {
     };
   }
 
-  RatingModel copyWith({
+  AppointmentRatingModel copyWith({
     String? mentorId,
     String? menteeId,
     String? appointmentId,
@@ -81,16 +82,21 @@ class RatingModel {
     String? comment,
     DateTime? createdAt,
   }) {
-    return RatingModel(
+    return AppointmentRatingModel(
       id: id,
 
-      mentorId: mentorId ?? this.mentorId,
-      menteeId: menteeId ?? this.menteeId,
+      mentorId:
+          mentorId ?? this.mentorId,
+
+      menteeId:
+          menteeId ?? this.menteeId,
+
       appointmentId:
           appointmentId ?? this.appointmentId,
 
       mentorName:
           mentorName ?? this.mentorName,
+
       menteeName:
           menteeName ?? this.menteeName,
 
@@ -105,3 +111,4 @@ class RatingModel {
     );
   }
 }
+

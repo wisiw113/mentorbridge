@@ -1,11 +1,15 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter_application_1/models/session_model.dart';
+import 'package:flutter_application_1/models/session_rating_model.dart';
+
 import 'package:flutter_application_1/services/session_service.dart';
+import 'package:flutter_application_1/services/session_rating_service.dart';
+
+import 'package:flutter_application_1/widgets/common/rating_popup.dart';
 
 import 'package:flutter_application_1/widgets/session/session_info_card.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_document_card.dart';
@@ -29,15 +33,30 @@ class _MenteeSessionDetailScreenState
   final SessionService _sessionService =
       SessionService();
 
+  final SessionRatingService _ratingService =
+      SessionRatingService();
+
   bool _isLoading = false;
   bool _isJoined = false;
+  bool _isRated = false;
+  bool _isRatingLoading = false;
 
   SessionModel get session => widget.session;
 
   @override
   void initState() {
     super.initState();
-    _checkJoined();
+
+    _initialize();
+  }
+
+  // =========================================================
+  // INITIALIZE
+  // =========================================================
+
+  Future<void> _initialize() async {
+    await _checkJoined();
+    await _checkRated();
   }
 
   // =========================================================
@@ -69,6 +88,39 @@ class _MenteeSessionDetailScreenState
     } catch (e) {
       debugPrint(
         "Check joined error: $e",
+      );
+    }
+  }
+
+  // =========================================================
+  // CHECK RATED
+  // =========================================================
+
+  Future<void> _checkRated() async {
+    final user =
+        FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    try {
+      final rated =
+          await _ratingService.hasRatedSession(
+        sessionId: session.id,
+        menteeId: user.uid,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isRated = rated;
+      });
+    } catch (e) {
+      debugPrint(
+        "Check rated error: $e",
       );
     }
   }
@@ -174,6 +226,7 @@ class _MenteeSessionDetailScreenState
       );
       return;
     }
+
     if (session.status.toLowerCase() !=
         "open") {
       _showMessage(
@@ -263,7 +316,6 @@ class _MenteeSessionDetailScreenState
       return;
     }
 
-    // Không cho Leave nếu session đã kết thúc
     if (_isSessionFinished) {
       _showMessage(
         "Không thể rời Session đã kết thúc.",
@@ -413,6 +465,174 @@ class _MenteeSessionDetailScreenState
   }
 
   // =========================================================
+  // SHOW RATING POPUP
+  // =========================================================
+
+  Future<void> _showRatingDialog() async {
+    final user =
+        FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      _showMessage(
+        "Vui lòng đăng nhập.",
+      );
+      return;
+    }
+
+    // =======================================================
+    // CHECK SESSION COMPLETED
+    // =======================================================
+
+    if (!_isSessionCompleted) {
+      _showMessage(
+        "Bạn chỉ có thể đánh giá sau khi Session hoàn thành.",
+      );
+      return;
+    }
+
+    // =======================================================
+    // CHECK JOINED
+    // =======================================================
+
+    if (!_isJoined) {
+      _showMessage(
+        "Bạn phải tham gia Session mới có thể đánh giá.",
+      );
+      return;
+    }
+
+    // =======================================================
+    // CHECK ALREADY RATED
+    // =======================================================
+
+    if (_isRated) {
+      _showMessage(
+        "Bạn đã đánh giá Session này rồi.",
+      );
+      return;
+    }
+
+    // =======================================================
+    // SHOW POPUP
+    // =======================================================
+
+    final result =
+        await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) {
+        return const RatingPopup();
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final ratingValue =
+        result["rating"] as int?;
+
+    final comment =
+        result["comment"] as String? ?? "";
+
+    if (ratingValue == null) {
+      _showMessage(
+        "Vui lòng chọn số sao.",
+      );
+      return;
+    }
+
+    // =======================================================
+    // LOADING
+    // =======================================================
+
+    setState(() {
+      _isRatingLoading = true;
+    });
+
+    try {
+      // =====================================================
+      // GET MENTEE NAME
+      // =====================================================
+
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection("users")
+              .doc(user.uid)
+              .get();
+
+      final userData =
+          userDoc.data();
+
+      final menteeName =
+          (userData?["name"] ?? "")
+                  .toString()
+                  .trim()
+                  .isNotEmpty
+              ? userData!["name"]
+                  .toString()
+                  .trim()
+              : user.displayName ??
+                  "Mentee";
+
+      // =====================================================
+      // CREATE RATING MODEL
+      // =====================================================
+
+      final rating =
+          SessionRatingModel(
+        id: "",
+        sessionId: session.id,
+        mentorId: session.mentorId,
+        menteeId: user.uid,
+        mentorName: session.mentorName,
+        menteeName: menteeName,
+        rating:
+            ratingValue.toDouble(),
+        comment: comment.trim(),
+        createdAt: DateTime.now(),
+      );
+
+      // =====================================================
+      // SAVE RATING
+      // =====================================================
+
+      await _ratingService
+          .createSessionRating(
+        rating,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isRated = true;
+      });
+
+      _showMessage(
+        "Đánh giá Session thành công!",
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(
+        e.toString().replaceFirst(
+          "Exception: ",
+          "",
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRatingLoading = false;
+        });
+      }
+    }
+  }
+
+  // =========================================================
   // HELPERS
   // =========================================================
 
@@ -421,11 +641,20 @@ class _MenteeSessionDetailScreenState
         session.maxSlots;
   }
 
+  bool get _isSessionCompleted {
+    final status =
+        session.status.toLowerCase();
+
+    return status == "completed" ||
+        status == "complete";
+  }
+
   bool get _isSessionFinished {
     final status =
         session.status.toLowerCase();
 
     return status == "completed" ||
+        status == "complete" ||
         status == "cancelled";
   }
 
@@ -450,6 +679,179 @@ class _MenteeSessionDetailScreenState
   }
 
   // =========================================================
+  // RATING SECTION
+  // =========================================================
+
+  Widget _buildRatingSection() {
+    if (!_isSessionCompleted) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(
+        16,
+        10,
+        16,
+        0,
+      ),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.black.withOpacity(.04),
+            blurRadius: 8,
+            offset:
+                const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.star_rounded,
+                color: Colors.amber,
+                size: 26,
+              ),
+              SizedBox(width: 8),
+              Text(
+                "Đánh giá Session",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            _isRated
+                ? "Bạn đã gửi đánh giá cho Session này."
+                : "Hãy chia sẻ trải nghiệm của bạn về Session.",
+            style: TextStyle(
+              color:
+                  Colors.grey.shade600,
+              fontSize: 14,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          SizedBox(
+            width: double.infinity,
+            child: _isRated
+                ? Container(
+                    padding:
+                        const EdgeInsets
+                            .symmetric(
+                      vertical: 12,
+                    ),
+                    decoration:
+                        BoxDecoration(
+                      color: Colors
+                          .green
+                          .withOpacity(.08),
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                        10,
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment
+                              .center,
+                      children: [
+                        Icon(
+                          Icons
+                              .check_circle,
+                          color:
+                              Colors.green,
+                        ),
+                        SizedBox(
+                          width: 8,
+                        ),
+                        Text(
+                          "Đã đánh giá",
+                          style: TextStyle(
+                            color:
+                                Colors.green,
+                            fontWeight:
+                                FontWeight
+                                    .bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ElevatedButton.icon(
+                    onPressed:
+                        _isRatingLoading
+                            ? null
+                            : _showRatingDialog,
+                    icon:
+                        _isRatingLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(
+                                  strokeWidth:
+                                      2,
+                                  color:
+                                      Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons
+                                    .star_rounded,
+                              ),
+                    label: Text(
+                      _isRatingLoading
+                          ? "Đang gửi..."
+                          : "Đánh giá Session",
+                    ),
+                    style:
+                        ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Colors.amber.shade700,
+                      foregroundColor:
+                          Colors.white,
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        vertical: 13,
+                      ),
+                      shape:
+                          RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          10,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
   // BUILD
   // =========================================================
 
@@ -463,6 +865,7 @@ class _MenteeSessionDetailScreenState
           "Session Details",
         ),
       ),
+
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -471,12 +874,14 @@ class _MenteeSessionDetailScreenState
             // =================================================
 
             SessionInfoCard(
-              title: session.title,
+              title:
+                  session.title,
               description:
                   session.description,
               mentorName:
                   session.mentorName,
-              date: session.date,
+              date:
+                  session.date,
               startTime:
                   session.startTime,
               endTime:
@@ -501,6 +906,16 @@ class _MenteeSessionDetailScreenState
                 onTap:
                     _openDocument,
               ),
+
+            const SizedBox(
+              height: 10,
+            ),
+
+            // =================================================
+            // RATING
+            // =================================================
+
+            _buildRatingSection(),
 
             const SizedBox(
               height: 10,
@@ -534,3 +949,4 @@ class _MenteeSessionDetailScreenState
     );
   }
 }
+

@@ -1,7 +1,8 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../../../services/rating_service.dart';
+import '../../../services/appointment_rating_service.dart';
 
 import '../../../widgets/mentor/mentor_booking_button.dart';
 import '../../../widgets/mentor/mentor_header.dart';
@@ -87,8 +88,6 @@ class MentorProfileScreen extends StatelessWidget {
           final String email =
               data["email"]?.toString() ?? "";
 
-          // QUAN TRỌNG:
-          // ProfileTab của bạn lưu ảnh bằng "photoURL"
           final String? avatarUrl =
               data["photoURL"]?.toString();
 
@@ -97,15 +96,16 @@ class MentorProfileScreen extends StatelessWidget {
           // =========================
 
           return FutureBuilder<Map<String, dynamic>>(
-            future: RatingService()
+            future: AppointmentRatingService()
                 .getMentorRatingSummary(mentorId),
 
             builder: (
               context,
               ratingSnapshot,
             ) {
-              double rating = 0.0;
-              int totalRating = 0;
+              // =========================
+              // LOADING RATING
+              // =========================
 
               if (ratingSnapshot.connectionState ==
                   ConnectionState.waiting) {
@@ -113,6 +113,22 @@ class MentorProfileScreen extends StatelessWidget {
                   child: CircularProgressIndicator(),
                 );
               }
+
+              // =========================
+              // ERROR RATING
+              // =========================
+
+              if (ratingSnapshot.hasError) {
+                return Center(
+                  child: Text(
+                    "Lỗi tải đánh giá Mentor: "
+                    "${ratingSnapshot.error}",
+                  ),
+                );
+              }
+
+              double rating = 0.0;
+              int totalRating = 0;
 
               if (ratingSnapshot.hasData) {
                 final result =
@@ -125,11 +141,13 @@ class MentorProfileScreen extends StatelessWidget {
                     result["reviewCount"];
 
                 if (average is num) {
-                  rating = average.toDouble();
+                  rating =
+                      average.toDouble();
                 }
 
                 if (count is num) {
-                  totalRating = count.toInt();
+                  totalRating =
+                      count.toInt();
                 }
               }
 
@@ -209,3 +227,4 @@ class MentorProfileScreen extends StatelessWidget {
     );
   }
 }
+
