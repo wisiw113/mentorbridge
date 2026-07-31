@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/session_participant_model.dart';
 import '../../../services/session_service.dart';
-import '../participant_card.dart';
+import '../mentor_session_activity/participant_card.dart';
 
 class SessionParticipantsList extends StatelessWidget {
   final String sessionId;

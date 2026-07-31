@@ -11,7 +11,7 @@ import 'package:flutter_application_1/services/session_rating_service.dart';
 
 import 'package:flutter_application_1/widgets/common/rating_popup.dart';
 
-import 'package:flutter_application_1/widgets/session/session_info_card.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_info_card.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_document_card.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_participant_actions.dart';
 
@@ -920,10 +920,6 @@ class _MenteeSessionDetailScreenState
             const SizedBox(
               height: 10,
             ),
-
-            // =================================================
-            // PARTICIPANT ACTIONS
-            // =================================================
 
             SessionParticipantActions(
               isLoading:

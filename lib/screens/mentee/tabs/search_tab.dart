@@ -6,7 +6,7 @@ import 'package:flutter_application_1/models/session_model.dart';
 import 'package:flutter_application_1/services/appointment_rating_service.dart';
 
 import 'package:flutter_application_1/widgets/mentor/mentor_card.dart';
-import 'package:flutter_application_1/widgets/session/session_card.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_card.dart';
 
 import 'package:flutter_application_1/screens/mentee/screens/mentor_profile_screen.dart';
 import 'package:flutter_application_1/screens/mentee/screens/mentee_session_detail_screen.dart';

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/models/session_model.dart';
 import 'package:flutter_application_1/services/session_service.dart';
 
-import 'package:flutter_application_1/widgets/session/session_card.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_card.dart';
 
 import 'create_session_screen.dart';
 import 'session_detail_screen.dart';

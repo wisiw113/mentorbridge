@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/session_model.dart';
 import 'package:flutter_application_1/services/session_service.dart';
 
-import 'package:flutter_application_1/widgets/session/session_card.dart';
-import 'package:flutter_application_1/widgets/session/session_search_bar.dart';
-import 'package:flutter_application_1/widgets/session/session_filter_bar.dart';
-import 'package:flutter_application_1/widgets/session/session_empty_state.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_card.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_search_bar.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_filter_bar.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_empty_state.dart';
 
 import 'package:flutter_application_1/screens/mentor/screens/create_session_screen.dart';
 import 'package:flutter_application_1/screens/mentor/screens/session_detail_screen.dart';

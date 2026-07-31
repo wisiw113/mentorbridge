@@ -7,8 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../../widgets/common/confirm_dialog.dart';
 import '../../../widgets/common/edit_profile_popup.dart';
+import '../../../widgets/profile_tab/profile_action_buttons.dart';
+import '../../../widgets/profile_tab/profile_avatar.dart';
+import '../../../widgets/profile_tab/profile_header.dart';
+import '../../../widgets/profile_tab/profile_stats.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -20,8 +25,6 @@ class ProfileTab extends StatefulWidget {
 class _ProfileTabState extends State<ProfileTab> {
   final uid = FirebaseAuth.instance.currentUser!.uid;
 
-  // ================= COMMON =================
-
   String name = "";
   String role = "";
   String email = "";
@@ -31,16 +34,9 @@ class _ProfileTabState extends State<ProfileTab> {
 
   int? birthYear;
 
-  // ================= MENTOR =================
-
-  String specialization = "";
-  String experience = "";
-  String skills = "";
-
-  // ================= MENTEE =================
-
-  String interests = "";
-  String learningGoals = "";
+  String major = "";
+  String studentYear = "";
+  String bio = "";
 
   bool isUploading = false;
   bool isLoading = true;
@@ -50,8 +46,6 @@ class _ProfileTabState extends State<ProfileTab> {
     super.initState();
     loadUser();
   }
-
-  // ================= LOAD USER =================
 
   Future<void> loadUser() async {
     try {
@@ -63,25 +57,22 @@ class _ProfileTabState extends State<ProfileTab> {
       final data = doc.data();
 
       if (data == null) {
+        if (!mounted) return;
+
         setState(() {
           isLoading = false;
         });
+
         return;
       }
 
       if (!mounted) return;
 
       setState(() {
-        // Common
         name = data['name']?.toString() ?? "";
-
         role = data['role']?.toString() ?? "";
-
-        email =
-            FirebaseAuth.instance.currentUser?.email ?? "";
-
+        email = FirebaseAuth.instance.currentUser?.email ?? "";
         gender = data['gender']?.toString() ?? "";
-
         photoURL = data['photoURL']?.toString();
 
         birthYear = data['birthYear'] is int
@@ -90,22 +81,9 @@ class _ProfileTabState extends State<ProfileTab> {
                 data['birthYear']?.toString() ?? "",
               );
 
-        // Mentor
-        specialization =
-            data['specialization']?.toString() ?? "";
-
-        experience =
-            data['experience']?.toString() ?? "";
-
-        skills =
-            data['skills']?.toString() ?? "";
-
-        // Mentee
-        interests =
-            data['interests']?.toString() ?? "";
-
-        learningGoals =
-            data['learningGoals']?.toString() ?? "";
+        major = data['major']?.toString() ?? "";
+        studentYear = data['studentYear']?.toString() ?? "";
+        bio = data['bio']?.toString() ?? "";
 
         isLoading = false;
       });
@@ -126,8 +104,6 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  // ================= CLOUDINARY =================
-
   Future<String?> uploadToCloudinary(
     Uint8List bytes,
   ) async {
@@ -144,8 +120,7 @@ class _ProfileTabState extends State<ProfileTab> {
       url,
     );
 
-    request.fields['upload_preset'] =
-        uploadPreset;
+    request.fields['upload_preset'] = uploadPreset;
 
     request.files.add(
       http.MultipartFile.fromBytes(
@@ -170,8 +145,6 @@ class _ProfileTabState extends State<ProfileTab> {
     return null;
   }
 
-  // ================= PICK IMAGE =================
-
   Future<void> pickAndUploadImage() async {
     final picker = ImagePicker();
 
@@ -190,37 +163,22 @@ class _ProfileTabState extends State<ProfileTab> {
           title: const Text(
             "Xác nhận ảnh đại diện",
           ),
-
           content: Image.memory(
             bytes,
             height: 200,
           ),
-
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  context,
-                  false,
-                );
+                Navigator.pop(context, false);
               },
-
-              child: const Text(
-                "Hủy",
-              ),
+              child: const Text("Hủy"),
             ),
-
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(
-                  context,
-                  true,
-                );
+                Navigator.pop(context, true);
               },
-
-              child: const Text(
-                "OK",
-              ),
+              child: const Text("OK"),
             ),
           ],
         );
@@ -234,8 +192,7 @@ class _ProfileTabState extends State<ProfileTab> {
     });
 
     try {
-      final url =
-          await uploadToCloudinary(bytes);
+      final url = await uploadToCloudinary(bytes);
 
       if (url != null) {
         await FirebaseFirestore.instance
@@ -245,9 +202,7 @@ class _ProfileTabState extends State<ProfileTab> {
           {
             'photoURL': url,
           },
-          SetOptions(
-            merge: true,
-          ),
+          SetOptions(merge: true),
         );
 
         if (!mounted) return;
@@ -275,51 +230,20 @@ class _ProfileTabState extends State<ProfileTab> {
     });
   }
 
-  // ================= EDIT PROFILE =================
-
   void editProfileDialog() {
     showDialog(
       context: context,
-
       builder: (_) {
         return EditProfilePopup(
-          // Common
           name: name,
-
-          birthYear:
-              birthYear?.toString() ?? "",
-
+          birthYear: birthYear?.toString() ?? "",
           gender: gender,
-
-          // Role
-          role: role,
-
-          // Mentor
-          specialization:
-              specialization,
-
-          experience:
-              experience,
-
-          skills:
-              skills,
-
-          // Mentee
-          interests:
-              interests,
-
-          learningGoals:
-              learningGoals,
-
+          bio: bio,
           onSave: (
             newName,
             newBirthYear,
             newGender,
-            newSpecialization,
-            newExperience,
-            newSkills,
-            newInterests,
-            newLearningGoals,
+            newBio,
           ) async {
             try {
               await FirebaseFirestore.instance
@@ -327,43 +251,21 @@ class _ProfileTabState extends State<ProfileTab> {
                   .doc(uid)
                   .set(
                 {
-                  // Common
                   'name': newName,
-
-                  'birthYear':
-                      int.tryParse(
+                  'birthYear': int.tryParse(
                     newBirthYear,
                   ),
-
                   'gender': newGender,
-
-                  // Mentor
-                  'specialization':
-                      newSpecialization,
-
-                  'experience':
-                      newExperience,
-
-                  'skills': newSkills,
-
-                  // Mentee
-                  'interests':
-                      newInterests,
-
-                  'learningGoals':
-                      newLearningGoals,
+                  'bio': newBio,
                 },
-                SetOptions(
-                  merge: true,
-                ),
+                SetOptions(merge: true),
               );
 
               await loadUser();
 
               if (!mounted) return;
 
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(
+              ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
                     "Cập nhật profile thành công",
@@ -373,8 +275,7 @@ class _ProfileTabState extends State<ProfileTab> {
             } catch (e) {
               if (!mounted) return;
 
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(
+              ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
                     "Cập nhật thất bại: $e",
@@ -388,16 +289,11 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // ================= LOGOUT =================
-
   Future<void> logout() async {
     final confirm = await showConfirmDialog(
       context,
-
       title: "Logout",
-
-      content:
-          "Are you sure you want to logout?",
+      content: "Are you sure you want to logout?",
     );
 
     if (!confirm) return;
@@ -412,8 +308,6 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // ================= UI =================
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -425,278 +319,47 @@ class _ProfileTabState extends State<ProfileTab> {
     }
 
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF8F9FA),
-
+      backgroundColor: AppColors.softMint,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(
             bottom: 30,
           ),
-
           child: Column(
             children: [
               const SizedBox(height: 25),
 
-              // ================= AVATAR =================
-
-              Stack(
-                alignment:
-                    Alignment.bottomRight,
-
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-
-                    backgroundColor:
-                        Colors.grey.shade300,
-
-                    backgroundImage:
-                        photoURL != null
-                            ? NetworkImage(
-                                photoURL!,
-                              )
-                            : null,
-
-                    child: photoURL == null
-                        ? Text(
-                            name.isNotEmpty
-                                ? name[0]
-                                    .toUpperCase()
-                                : "?",
-
-                            style:
-                                const TextStyle(
-                              fontSize: 30,
-
-                              fontWeight:
-                                  FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-
-                  GestureDetector(
-                    onTap:
-                        pickAndUploadImage,
-
-                    child: Container(
-                      padding:
-                          const EdgeInsets.all(
-                        8,
-                      ),
-
-                      decoration:
-                          const BoxDecoration(
-                        color: Colors.black,
-
-                        shape:
-                            BoxShape.circle,
-                      ),
-
-                      child: isUploading
-                          ? const SizedBox(
-                              width: 16,
-
-                              height: 16,
-
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth: 2,
-
-                                color:
-                                    Colors.white,
-                              ),
-                            )
-                          : const Icon(
-                              Icons
-                                  .camera_alt,
-                              size: 17,
-
-                              color:
-                                  Colors.white,
-                            ),
-                    ),
-                  ),
-                ],
+              ProfileAvatar(
+                name: name,
+                photoURL: photoURL,
+                isUploading: isUploading,
+                onCameraTap: pickAndUploadImage,
               ),
 
               const SizedBox(height: 12),
 
-              // ================= NAME =================
-
-              Text(
-                name.isEmpty
-                    ? "User"
-                    : name,
-
-                style: const TextStyle(
-                  fontSize: 23,
-
-                  fontWeight:
-                      FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              Text(
-                email,
-
-                style: const TextStyle(
-                  color: Colors.grey,
-
-                  fontSize: 14,
-                ),
+              ProfileHeader(
+                name: name,
+                email: email,
               ),
 
               const SizedBox(height: 25),
 
-              // ================= BASIC INFO =================
-
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment
-                        .spaceEvenly,
-
-                children: [
-                  _stat(
-                    title: "Role",
-
-                    value: role,
-                  ),
-
-                  _stat(
-                    title: "Birth Year",
-
-                    value: birthYear
-                            ?.toString() ??
-                        "-",
-                  ),
-
-                  _stat(
-                    title: "Gender",
-
-                    value: gender.isEmpty
-                        ? "-"
-                        : gender,
-                  ),
-                ],
+              ProfileStats(
+                role: role,
+                birthYear: birthYear,
+                gender: gender,
               ),
-
-              const SizedBox(height: 30),
-
-              // ================= ROLE INFO =================
-
-              if (role.toLowerCase() ==
-                  "mentor")
-                _buildMentorInfo(),
-
-              if (role.toLowerCase() ==
-                  "mentee")
-                _buildMenteeInfo(),
 
               const SizedBox(height: 25),
 
-              // ================= BUTTONS =================
+              _buildProfileInfo(),
 
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 20,
-                ),
+              const SizedBox(height: 25),
 
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width:
-                          double.infinity,
-
-                      child:
-                          ElevatedButton.icon(
-                        onPressed:
-                            editProfileDialog,
-
-                        icon: const Icon(
-                          Icons
-                              .edit_outlined,
-                          size: 18,
-                        ),
-
-                        label: const Text(
-                          "Edit Profile",
-                        ),
-
-                        style:
-                            ElevatedButton
-                                .styleFrom(
-                          backgroundColor:
-                              Colors.black,
-
-                          foregroundColor:
-                              Colors.white,
-
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            vertical: 14,
-                          ),
-
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius
-                                    .circular(
-                              30,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 12,
-                    ),
-
-                    SizedBox(
-                      width:
-                          double.infinity,
-
-                      child:
-                          OutlinedButton.icon(
-                        onPressed: logout,
-
-                        icon: const Icon(
-                          Icons.logout,
-                          size: 18,
-                        ),
-
-                        label: const Text(
-                          "Logout",
-                        ),
-
-                        style:
-                            OutlinedButton
-                                .styleFrom(
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            vertical: 14,
-                          ),
-
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius
-                                    .circular(
-                              30,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              ProfileActionButtons(
+                onEdit: editProfileDialog,
+                onLogout: logout,
               ),
             ],
           ),
@@ -705,114 +368,55 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // ================= MENTOR INFO =================
-
-  Widget _buildMentorInfo() {
-    return _infoCard(
-      title: "Mentor Information",
-
-      children: [
-        _infoRow(
-          Icons.work_outline,
-          "Specialization",
-          specialization,
-        ),
-
-        _infoRow(
-          Icons.timeline,
-          "Experience",
-          experience,
-        ),
-
-        _infoRow(
-          Icons.star_outline,
-          "Skills",
-          skills,
-        ),
-      ],
-    );
-  }
-
-  // ================= MENTEE INFO =================
-
-  Widget _buildMenteeInfo() {
-    return _infoCard(
-      title: "Learning Information",
-
-      children: [
-        _infoRow(
-          Icons.interests_outlined,
-          "Interests",
-          interests,
-        ),
-
-        _infoRow(
-          Icons.flag_outlined,
-          "Learning Goals",
-          learningGoals,
-        ),
-      ],
-    );
-  }
-
-  // ================= INFO CARD =================
-
-  Widget _infoCard({
-    required String title,
-    required List<Widget> children,
-  }) {
+  Widget _buildProfileInfo() {
     return Container(
       width: double.infinity,
-
       margin: const EdgeInsets.symmetric(
         horizontal: 20,
       ),
-
       padding: const EdgeInsets.all(18),
-
       decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius:
-            BorderRadius.circular(18),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black
-                .withOpacity(0.05),
-
-            blurRadius: 10,
-
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.border,
+        ),
       ),
-
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-
-            style: const TextStyle(
+          const Text(
+            "Profile Information",
+            style: TextStyle(
               fontSize: 17,
-
-              fontWeight:
-                  FontWeight.bold,
+              fontWeight: FontWeight.bold,
+              color: AppColors.deepGreen,
             ),
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
-          ...children,
+          _infoRow(
+            Icons.school_outlined,
+            "Major",
+            major,
+          ),
+
+          _infoRow(
+            Icons.menu_book_outlined,
+            "Student Year",
+            studentYear,
+          ),
+
+          _infoRow(
+            Icons.info_outline,
+            "About Me",
+            bio,
+          ),
         ],
       ),
     );
   }
-
-  // ================= INFO ROW =================
 
   Widget _infoRow(
     IconData icon,
@@ -823,18 +427,14 @@ class _ProfileTabState extends State<ProfileTab> {
       padding: const EdgeInsets.only(
         bottom: 14,
       ),
-
       child: Row(
         crossAxisAlignment:
             CrossAxisAlignment.start,
-
         children: [
           Icon(
             icon,
-
-            size: 21,
-
-            color: Colors.grey.shade700,
+            size: 20,
+            color: AppColors.deepGreen,
           ),
 
           const SizedBox(width: 12),
@@ -843,32 +443,22 @@ class _ProfileTabState extends State<ProfileTab> {
             child: Column(
               crossAxisAlignment:
                   CrossAxisAlignment.start,
-
               children: [
                 Text(
                   title,
-
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
-
-                    color:
-                        Colors.grey.shade600,
+                    color: AppColors.gray,
                   ),
                 ),
 
                 const SizedBox(height: 3),
 
                 Text(
-                  value.isEmpty
-                      ? "-"
-                      : value,
-
-                  style:
-                      const TextStyle(
+                  value.isEmpty ? "-" : value,
+                  style: const TextStyle(
                     fontSize: 14,
-
-                    fontWeight:
-                        FontWeight.w500,
+                    color: AppColors.darkGray,
                   ),
                 ),
               ],
@@ -878,38 +468,5 @@ class _ProfileTabState extends State<ProfileTab> {
       ),
     );
   }
-
-  // ================= STAT =================
-
-  Widget _stat({
-    required String title,
-    required String value,
-  }) {
-    return Column(
-      children: [
-        Text(
-          value.isEmpty
-              ? "-"
-              : value,
-
-          style: const TextStyle(
-            fontSize: 16,
-
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
-
-        const SizedBox(height: 5),
-
-        Text(
-          title,
-
-          style: const TextStyle(
-            color: Colors.grey,
-          ),
-        ),
-      ],
-    );
-  }
 }
+

@@ -14,7 +14,7 @@ import 'package:flutter_application_1/widgets/calendar/schedule_date_selector.da
 import 'package:flutter_application_1/widgets/calendar/appointment_schedule_card.dart';
 import 'package:flutter_application_1/widgets/calendar/schedule_empty_card.dart';
 import 'package:flutter_application_1/widgets/calendar/section_title.dart';
-import 'package:flutter_application_1/widgets/session/session_card.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_card.dart';
 
 class ScheduleTab extends StatefulWidget {
   const ScheduleTab({super.key});

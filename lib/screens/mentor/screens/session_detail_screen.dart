@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/session_model.dart';
 import 'package:flutter_application_1/services/session_service.dart';
 
-import 'package:flutter_application_1/widgets/session/session_info_card.dart';
+import 'package:flutter_application_1/widgets/session/mentor_session_activity/session_info_card.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_document_card.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_management_buttons.dart';
 import 'package:flutter_application_1/widgets/session/session_detail/session_participants_header.dart';
