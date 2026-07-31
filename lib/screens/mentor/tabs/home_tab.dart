@@ -1,147 +1,381 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../../core/theme/app_colors.dart';
+
+import '../../../models/appointment_model.dart';
+import '../../../models/session_model.dart';
+import '../../../models/schedule_item.dart';
+
+import '../../../services/appointment_service.dart';
+import '../../../services/session_service.dart';
+
+import '../../../widgets/mentor/mentor_home/greeting_card.dart';
+import '../../../widgets/mentor/mentor_home/request_card.dart';
+import '../../../widgets/mentor/mentor_home/summary_card.dart';
+import '../../../widgets/mentor/mentor_home/upcoming_appointment_card.dart';
+import '../../../widgets/mentor/mentor_home/upcoming_session.dart';
+import '../../../widgets/mentor/mentor_home/weekly_schedule_card.dart';
+
 
 class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+  const HomeTab({
+    super.key,
+  });
+
 
   @override
   Widget build(BuildContext context) {
+
+    final user =
+        FirebaseAuth.instance.currentUser;
+
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text("Chưa đăng nhập"),
+        ),
+      );
+    }
+
+
     return Scaffold(
       backgroundColor: AppColors.lightMint,
-      appBar: AppBar(
-        title: const Text("Mentor Dashboard"),
-        backgroundColor: AppColors.mintGreen,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            // Thông tin Mentor
-            Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              child: ListTile(
-                leading: const CircleAvatar(
-                  radius: 28,
-                  backgroundColor: AppColors.softMint,
-                  child: Icon(Icons.person,
-                      color: AppColors.deepGreen, size: 30),
-                ),
-                title: const Text(
-                  "Nguyễn Văn A",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text("Flutter Mentor"),
-                trailing: const Icon(Icons.notifications_none),
-              ),
-            ),
 
-            const SizedBox(height: 20),
+      body: SafeArea(
 
-            const Text(
-              "Thống kê",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+        child: StreamBuilder<List<AppointmentModel>>(
 
-            const SizedBox(height: 10),
+          stream: AppointmentService()
+              .getMentorRequests(user.uid),
 
-            Row(
-              children: [
-                Expanded(child: statCard(Icons.people, "25", "Mentee")),
-                const SizedBox(width: 10),
-                Expanded(child: statCard(Icons.star, "4.9", "Rating")),
-              ],
-            ),
 
-            const SizedBox(height: 10),
+          builder: (context, appointmentSnapshot) {
 
-            Row(
-              children: [
-                Expanded(child: statCard(Icons.calendar_today, "12", "Lịch")),
-                const SizedBox(width: 10),
-                Expanded(child: statCard(Icons.check_circle, "18", "Hoàn thành")),
-              ],
-            ),
 
-            const SizedBox(height: 20),
+            if (!appointmentSnapshot.hasData) {
 
-            const Text(
-              "Yêu cầu kết nối",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+              return const Center(
+                child:
+                    CircularProgressIndicator(),
+              );
 
-            const SizedBox(height: 10),
+            }
 
-            requestCard("Trần Văn B", "Muốn học Flutter cơ bản"),
-            requestCard("Lê Thị C", "Xin mentor Java Backend"),
 
-            const SizedBox(height: 20),
+            final appointments =
+                appointmentSnapshot.data!;
 
-            const Text(
-              "Lịch hôm nay",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
 
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.schedule,
-                    color: AppColors.mintGreen),
-                title: const Text("Review CV"),
-                subtitle: const Text("09:00 - 10:00"),
-              ),
-            ),
-          ],
+
+            return StreamBuilder<List<SessionModel>>(
+
+              stream: SessionService()
+                  .getMentorSessions(user.uid),
+
+
+              builder: (context, sessionSnapshot) {
+
+
+                if (!sessionSnapshot.hasData) {
+
+                  return const Center(
+                    child:
+                        CircularProgressIndicator(),
+                  );
+
+                }
+
+
+                final sessions =
+                    sessionSnapshot.data!;
+
+
+
+                final upcomingAppointments =
+                    appointments
+                        .where(
+                          (e) =>
+                              e.status ==
+                              "accepted",
+                        )
+                        .toList();
+
+
+
+                final upcomingSessions =
+                    sessions
+                        .where(
+                          (e) =>
+                              e.status ==
+                              "open",
+                        )
+                        .toList();
+
+
+
+                final scheduleItems = [
+
+                  ...sessions.map(
+                    ScheduleItem.fromSession,
+                  ),
+
+                  ...appointments.map(
+                    ScheduleItem.fromAppointment,
+                  ),
+
+                ];
+
+
+
+                return ListView(
+
+                  padding:
+                      const EdgeInsets.all(16),
+
+
+                  children: [
+
+
+                    GreetingCard(
+
+                      mentorName:
+                          user.displayName ??
+                          "Mentor",
+
+                    ),
+
+
+
+                    const SizedBox(height:20),
+
+
+
+                    Row(
+
+                      children: [
+
+                        Expanded(
+
+                          child: SummaryCard(
+
+                            title:
+                                "Sessions",
+
+                            value:
+                                sessions.length
+                                    .toString(),
+
+                            icon:
+                                Icons.groups,
+
+                            color:
+                                Colors.green,
+
+                          ),
+
+                        ),
+
+
+
+                        const SizedBox(width:12),
+
+
+
+                        Expanded(
+
+                          child: SummaryCard(
+
+                            title:
+                                "Appointments",
+
+                            value:
+                                appointments.length
+                                    .toString(),
+
+                            icon:
+                                Icons.calendar_today,
+
+                            color:
+                                Colors.blue,
+
+                          ),
+
+                        ),
+
+                      ],
+
+                    ),
+
+
+
+
+                    const SizedBox(height:12),
+
+
+
+
+                    Row(
+
+                      children: [
+
+                        Expanded(
+
+                          child: SummaryCard(
+
+                            title:
+                                "Pending",
+
+                            value:
+                                appointments
+                                    .where(
+                                      (e) =>
+                                          e.status ==
+                                          "pending",
+                                    )
+                                    .length
+                                    .toString(),
+
+                            icon:
+                                Icons.pending_actions,
+
+                            color:
+                                Colors.orange,
+
+                          ),
+
+                        ),
+
+
+
+                        const SizedBox(width:12),
+
+
+
+                        Expanded(
+
+                          child: SummaryCard(
+
+                            title:
+                                "Completed",
+
+                            value:
+                                appointments
+                                    .where(
+                                      (e) =>
+                                          e.status ==
+                                          "completed",
+                                    )
+                                    .length
+                                    .toString(),
+
+                            icon:
+                                Icons.check_circle,
+
+                            color:
+                                Colors.purple,
+
+                          ),
+
+                        ),
+
+                      ],
+
+                    ),
+
+
+
+
+                    const SizedBox(height:20),
+
+
+
+
+                    RequestCard(
+
+                      requests:
+                          appointments,
+
+                    ),
+
+
+
+
+
+                    if (upcomingAppointments.isNotEmpty) ...[
+
+                      const SizedBox(height:20),
+
+
+                      UpcomingAppointmentCard(
+
+                        appointment:
+                            upcomingAppointments.first,
+
+                        onPressed: () {},
+
+                      ),
+
+                    ],
+
+
+
+
+                    if (upcomingSessions.isNotEmpty) ...[
+
+                      const SizedBox(height:20),
+
+
+                      UpcomingSessionCard(
+
+                        session:
+                            upcomingSessions.first,
+
+                        onPressed: () {},
+
+                      ),
+
+                    ],
+
+
+
+
+
+                    const SizedBox(height:20),
+
+
+
+
+                    WeeklyScheduleCard(
+
+                      schedules:
+                          scheduleItems,
+
+
+                      onDayTap: (day){},
+
+
+                      onViewAll: () {},
+
+                    ),
+
+                  ],
+
+                );
+
+              },
+
+            );
+
+          },
+
         ),
+
       ),
+
     );
+
   }
 
-  static Widget statCard(IconData icon, String value, String title) {
-    return Card(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.mintGreen, size: 30),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            Text(title),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Widget requestCard(String name, String content) {
-    return Card(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        leading: const CircleAvatar(
-          backgroundColor: AppColors.softMint,
-          child: Icon(Icons.person, color: AppColors.deepGreen),
-        ),
-        title: Text(name),
-        subtitle: Text(content),
-        trailing: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.mintGreen,
-          ),
-          onPressed: () {},
-          child: const Text(
-            "Xem",
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      ),
-    );
-  }
 }
