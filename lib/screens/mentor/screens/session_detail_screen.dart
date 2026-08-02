@@ -101,7 +101,6 @@ class _SessionDetailScreenState
                 "No",
               ),
             ),
-
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(
@@ -191,6 +190,23 @@ class _SessionDetailScreenState
   }
 
   // =========================================================
+  // CAN KICK
+  // Chỉ cho Kick khi Session còn open
+  // =========================================================
+
+  bool get canKick {
+    return session.status.toLowerCase() == "open";
+  }
+
+  // =========================================================
+  // SESSION COMPLETED
+  // =========================================================
+
+  bool get isCompleted {
+    return session.status.toLowerCase() == "completed";
+  }
+
+  // =========================================================
   // BUILD
   // =========================================================
 
@@ -263,7 +279,6 @@ class _SessionDetailScreenState
 
               if (session.fileUrl != null &&
                   session.fileUrl!.isNotEmpty)
-
                 SessionDocumentCard(
                   fileName:
                       session.fileName,
@@ -300,167 +315,161 @@ class _SessionDetailScreenState
               SessionParticipantsList(
                 sessionId:
                     session.id,
-              ),
 
-              const SizedBox(
-                height: 20,
+                canKick:
+                    canKick,
               ),
 
               // =================================================
               // SESSION RATINGS
+              // CHỈ HIỆN KHI COMPLETED
               // =================================================
 
-              StreamBuilder(
-                stream:
-                    _ratingService
-                        .getSessionRatings(
-                  session.id,
+              if (isCompleted) ...[
+                const SizedBox(
+                  height: 20,
                 ),
 
-                builder: (
-                  context,
-                  snapshot,
-                ) {
+                StreamBuilder(
+                  stream:
+                      _ratingService
+                          .getSessionRatings(
+                    session.id,
+                  ),
 
-                  // =================================================
-                  // LOADING
-                  // =================================================
+                  builder: (
+                    context,
+                    snapshot,
+                  ) {
 
-                  if (snapshot.connectionState ==
-                      ConnectionState.waiting) {
+                    // =============================================
+                    // LOADING
+                    // =============================================
 
-                    return const Padding(
-                      padding:
-                          EdgeInsets.all(30),
-
-                      child: Center(
-                        child:
-                            CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-
-                  // =================================================
-                  // ERROR
-                  // =================================================
-
-                  if (snapshot.hasError) {
-
-                    return Padding(
-                      padding:
-                          const EdgeInsets.all(20),
-
-                      child: Container(
-                        width:
-                            double.infinity,
-
+                    if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Padding(
                         padding:
-                            const EdgeInsets.all(16),
+                            EdgeInsets.all(30),
 
-                        decoration:
-                            BoxDecoration(
-                          color:
-                              Colors.red
-                                  .withOpacity(0.08),
-
-                          borderRadius:
-                              BorderRadius.circular(12),
+                        child: Center(
+                          child:
+                              CircularProgressIndicator(),
                         ),
-
-                        child: Row(
-                          children: [
-
-                            const Icon(
-                              Icons.error_outline,
-                              color:
-                                  Colors.red,
-                            ),
-
-                            const SizedBox(
-                              width: 10,
-                            ),
-
-                            Expanded(
-                              child: Text(
-                                "Không thể tải đánh giá Session.",
-                                style:
-                                    TextStyle(
-                                  color:
-                                      Colors.red
-                                          .shade700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  // =================================================
-                  // GET RATINGS
-                  // =================================================
-
-                  final ratings =
-                      snapshot.data ?? [];
-
-                  // =================================================
-                  // CALCULATE AVERAGE
-                  // =================================================
-
-                  double averageRating = 0.0;
-
-                  if (ratings.isNotEmpty) {
-
-                    double totalRating = 0.0;
-
-                    for (final rating
-                        in ratings) {
-
-                      totalRating +=
-                          rating.rating;
+                      );
                     }
 
-                    averageRating =
-                        totalRating /
-                            ratings.length;
-                  }
+                    // =============================================
+                    // ERROR
+                    // =============================================
 
-                  // =================================================
-                  // RATING UI
-                  // =================================================
+                    if (snapshot.hasError) {
+                      return Padding(
+                        padding:
+                            const EdgeInsets.all(20),
 
-                  return Column(
-                    children: [
+                        child: Container(
+                          width:
+                              double.infinity,
 
-                      // =================================================
-                      // RATING SUMMARY
-                      // =================================================
+                          padding:
+                              const EdgeInsets.all(16),
 
-                      SessionRatingSummaryCard(
-                        averageRating:
-                            averageRating,
+                          decoration:
+                              BoxDecoration(
+                            color:
+                                Colors.red
+                                    .withOpacity(0.08),
 
-                        reviewCount:
-                            ratings.length,
-                      ),
+                            borderRadius:
+                                BorderRadius.circular(12),
+                          ),
 
-                      const SizedBox(
-                        height: 10,
-                      ),
+                          child: Row(
+                            children: [
 
-                      // =================================================
-                      // RATING LIST
-                      // =================================================
+                              const Icon(
+                                Icons.error_outline,
+                                color:
+                                    Colors.red,
+                              ),
 
-                      SessionRatingList(
-                        ratings:
-                            ratings,
-                      ),
-                    ],
-                  );
-                },
-              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+
+                              Expanded(
+                                child: Text(
+                                  "Không thể tải đánh giá Session.",
+                                  style:
+                                      TextStyle(
+                                    color:
+                                        Colors.red
+                                            .shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    // =============================================
+                    // RATINGS
+                    // =============================================
+
+                    final ratings =
+                        snapshot.data ?? [];
+
+                    // =============================================
+                    // AVERAGE
+                    // =============================================
+
+                    double averageRating = 0.0;
+
+                    if (ratings.isNotEmpty) {
+                      double totalRating = 0.0;
+
+                      for (final rating
+                          in ratings) {
+                        totalRating +=
+                            rating.rating;
+                      }
+
+                      averageRating =
+                          totalRating /
+                              ratings.length;
+                    }
+
+                    // =============================================
+                    // RATING UI
+                    // =============================================
+
+                    return Column(
+                      children: [
+
+                        SessionRatingSummaryCard(
+                          averageRating:
+                              averageRating,
+
+                          reviewCount:
+                              ratings.length,
+                        ),
+
+                        const SizedBox(
+                          height: 10,
+                        ),
+
+                        SessionRatingList(
+                          ratings:
+                              ratings,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
 
               const SizedBox(
                 height: 30,

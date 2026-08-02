@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class AppointmentStatusFilter extends StatelessWidget {
+class PendingFilterBar extends StatelessWidget {
   final String selectedStatus;
   final ValueChanged<String> onChanged;
 
-  const AppointmentStatusFilter({
+  const PendingFilterBar({
     super.key,
     required this.selectedStatus,
     required this.onChanged,
@@ -24,34 +24,34 @@ class AppointmentStatusFilter extends StatelessWidget {
   ];
 
   // =========================================================
-  // TÊN HIỂN THỊ
+  // HIỂN THỊ TÊN TRẠNG THÁI
   // =========================================================
 
   String _getLabel(String status) {
     switch (status) {
       case 'pending':
-        return 'Đang chờ';
+        return 'Pending';
 
       case 'accepted':
-        return 'Đã chấp nhận';
+        return 'Accepted';
 
       case 'completed':
-        return 'Đã hoàn thành';
+        return 'Completed';
 
       case 'rejected':
-        return 'Đã từ chối';
+        return 'Rejected';
 
       case 'cancelled':
-        return 'Đã hủy';
+        return 'Cancelled';
 
       case 'all':
       default:
-        return 'Tất cả';
+        return 'All';
     }
   }
 
   // =========================================================
-  // ICON
+  // ICON TRẠNG THÁI
   // =========================================================
 
   IconData _getIcon(String status) {
@@ -78,7 +78,7 @@ class AppointmentStatusFilter extends StatelessWidget {
   }
 
   // =========================================================
-  // MÀU
+  // MÀU TRẠNG THÁI
   // =========================================================
 
   Color _getColor(String status) {
@@ -141,10 +141,6 @@ class AppointmentStatusFilter extends StatelessWidget {
               onChanged(status);
             },
 
-            // =================================================
-            // ICON
-            // =================================================
-
             avatar: Icon(
               _getIcon(status),
               size: 17,
@@ -153,30 +149,14 @@ class AppointmentStatusFilter extends StatelessWidget {
                   : color,
             ),
 
-            // =================================================
-            // LABEL
-            // =================================================
-
             label: Text(
               _getLabel(status),
             ),
 
-            // =================================================
-            // MÀU KHI ĐƯỢC CHỌN
-            // =================================================
-
             selectedColor: color,
-
-            // =================================================
-            // MÀU NỀN
-            // =================================================
 
             backgroundColor:
                 Colors.grey.shade100,
-
-            // =================================================
-            // BORDER
-            // =================================================
 
             side: BorderSide(
               color: isSelected
@@ -184,18 +164,10 @@ class AppointmentStatusFilter extends StatelessWidget {
                   : Colors.grey.shade300,
             ),
 
-            // =================================================
-            // BO GÓC
-            // =================================================
-
             shape: RoundedRectangleBorder(
               borderRadius:
                   BorderRadius.circular(20),
             ),
-
-            // =================================================
-            // TEXT STYLE
-            // =================================================
 
             labelStyle: TextStyle(
               color: isSelected
@@ -205,10 +177,6 @@ class AppointmentStatusFilter extends StatelessWidget {
               fontWeight:
                   FontWeight.w600,
             ),
-
-            // =================================================
-            // PADDING
-            // =================================================
 
             padding:
                 const EdgeInsets.symmetric(

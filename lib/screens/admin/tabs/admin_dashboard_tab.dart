@@ -1,5 +1,8 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_colors.dart';
 
 import '../../../widgets/admin/admin_stats_grid.dart';
 import '../../../widgets/admin/admin_session_stat_card.dart';
@@ -11,13 +14,27 @@ class AdminDashboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      // =========================
+      // NỀN XANH MINT
+      // =========================
+
+      backgroundColor: AppColors.lightMint,
 
       appBar: AppBar(
         title: const Text("Dashboard"),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color.fromARGB(
+          255,
+          228,
+          47,
+          47,
+        ),
+        foregroundColor: const Color.fromARGB(
+          255,
+          0,
+          0,
+          0,
+        ),
         elevation: 0,
       ),
 
@@ -309,3 +326,4 @@ class AdminDashboardTab extends StatelessWidget {
     });
   }
 }
+

@@ -671,7 +671,112 @@ class SessionService {
       },
     );
   }
+// =========================================================
+// KICK PARTICIPANT
+// =========================================================
 
+Future<void> kickParticipant({
+  required String sessionId,
+  required String participantId,
+}) async {
+  final sessionRef =
+      _firestore
+          .collection("sessions")
+          .doc(sessionId);
+
+  final participantRef =
+      _firestore
+          .collection("session_participants")
+          .doc(participantId);
+
+  await _firestore.runTransaction(
+    (transaction) async {
+      // =====================================================
+      // GET SESSION
+      // =====================================================
+
+      final sessionSnapshot =
+          await transaction.get(
+        sessionRef,
+      );
+
+      if (!sessionSnapshot.exists) {
+        throw Exception(
+          "Session không tồn tại.",
+        );
+      }
+
+      // =====================================================
+      // GET PARTICIPANT
+      // =====================================================
+
+      final participantSnapshot =
+          await transaction.get(
+        participantRef,
+      );
+
+      if (!participantSnapshot.exists) {
+        throw Exception(
+          "Participant không tồn tại.",
+        );
+      }
+
+      // =====================================================
+      // CHECK SESSION STATUS
+      // =====================================================
+
+      final data =
+          sessionSnapshot.data()!;
+
+      final currentSession =
+          SessionModel.fromMap(
+        sessionSnapshot.id,
+        data,
+      );
+
+      final currentStatus =
+          _getExpectedStatus(
+        currentSession,
+      );
+
+      // Chỉ được kick khi Session chưa bắt đầu
+      if (currentStatus != "open") {
+        throw Exception(
+          "Không thể kick mentee khi Session đã bắt đầu hoặc đã kết thúc.",
+        );
+      }
+
+      // =====================================================
+      // GET BOOKED SLOTS
+      // =====================================================
+
+      final int bookedSlots =
+          (data["bookedSlots"] ?? 0) as int;
+
+      // =====================================================
+      // DECREASE BOOKED SLOTS
+      // =====================================================
+
+      transaction.update(
+        sessionRef,
+        {
+          "bookedSlots":
+              bookedSlots > 0
+                  ? bookedSlots - 1
+                  : 0,
+        },
+      );
+
+      // =====================================================
+      // REMOVE PARTICIPANT
+      // =====================================================
+
+      transaction.delete(
+        participantRef,
+      );
+    },
+  );
+}
   // =========================================================
   // GET PARTICIPANTS
   // =========================================================

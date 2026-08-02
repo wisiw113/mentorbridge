@@ -1,10 +1,15 @@
+
 import 'package:flutter/material.dart';
+
 import '../tabs/home_tab.dart';
 import '../tabs/schedule_tab.dart';
 import '../tabs/activity_tab.dart';
 
-// shared
+// Shared
 import '../../common/profile_tab.dart';
+
+// Custom bottom navbar
+import '../../../widgets/common/custom_bottom_navbar.dart';
 
 class MentorScreen extends StatefulWidget {
   const MentorScreen({super.key});
@@ -18,7 +23,6 @@ class _MentorScreenState extends State<MentorScreen> {
 
   late final List<Widget> pages = [
     HomeTab(),
-   
     ActivityScreen(),
     ScheduleTab(),
     ProfileTab(),
@@ -27,42 +31,37 @@ class _MentorScreenState extends State<MentorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: pages,
-      ),
-
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
-
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
+      body: Stack(
+        children: [
+          // ==========================================
+          // CONTENT
+          // ==========================================
+          Positioned.fill(
+            child: IndexedStack(
+              index: currentIndex,
+              children: pages,
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: "Activity",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.schedule),
-            label: "Schedule",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
+
+          // ==========================================
+          // FLOATING NAVBAR
+          // ==========================================
+          Positioned(
+            left: 10,
+            right: 10,
+            bottom: 10,
+            child: XBottomNavbar(
+              currentIndex: currentIndex,
+              onTap: (index) {
+                setState(() {
+                  currentIndex = index;
+                });
+              },
+            ),
           ),
         ],
       ),
     );
   }
 }
+

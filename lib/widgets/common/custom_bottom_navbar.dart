@@ -13,83 +13,135 @@ class XBottomNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(left: 14, right: 14, bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.deepGreen.withOpacity(0.08),
-            blurRadius: 25,
-            offset: const Offset(0, 10),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+        child: Container(
+          height: 55,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 8,
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _item(Icons.home, "Home", 0),
-          _item(Icons.search, "Search", 1),
-          _item(Icons.schedule, "Schedule", 2),
-          _item(Icons.person, "Profile", 3),
-        ],
+          decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(20),
+
+              // Viền đen
+              border: Border.all(
+                color: Colors.black,
+                width: 1.2,
+              ),
+
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.deepGreen.withOpacity(0.10),
+                  blurRadius: 30,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _item(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home,
+                label: "Home",
+                index: 0,
+              ),
+              _item(
+                icon: Icons.search_outlined,
+                activeIcon: Icons.search,
+                label: "Search",
+                index: 1,
+              ),
+              _item(
+                icon: Icons.calendar_month_outlined,
+                activeIcon: Icons.calendar_month,
+                label: "Schedule",
+                index: 2,
+              ),
+              _item(
+                icon: Icons.person_outline,
+                activeIcon: Icons.person,
+                label: "Profile",
+                index: 3,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _item(IconData icon, String label, int index) {
+  Widget _item({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+  }) {
     final bool active = currentIndex == index;
 
     return GestureDetector(
       onTap: () => onTap(index),
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: active ? 14 : 10,
-          vertical: 8,
+          horizontal: active ? 16 : 14,
+          vertical: 10,
         ),
         decoration: BoxDecoration(
           color: active
-              ? AppColors.mintGreen.withOpacity(0.15)
+              ? AppColors.mintGreen.withOpacity(0.16)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(26),
         ),
-        child: AnimatedScale(
-          duration: const Duration(milliseconds: 200),
-          scale: active ? 1.05 : 1.0,
-          child: Row(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  icon,
-                  size: active ? 26 : 24,
-                  color: active ? AppColors.mintGreen : AppColors.gray,
-                ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOutBack,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(
+                  scale: animation,
+                  child: child,
+                );
+              },
+              child: Icon(
+                active ? activeIcon : icon,
+                key: ValueKey(active),
+                size: active ? 25 : 24,
+                color: active
+                    ? AppColors.mintGreen
+                    : AppColors.gray,
               ),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                child: active
-                    ? Row(
-                        children: [
-                          const SizedBox(width: 6),
-                          Text(
-                            label,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.mintGreen,
-                            ),
+            ),
+
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              child: active
+                  ? Row(
+                      children: [
+                        const SizedBox(width: 7),
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.mintGreen,
                           ),
-                        ],
-                      )
-                    : const SizedBox(),
-              )
-            ],
-          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
     );

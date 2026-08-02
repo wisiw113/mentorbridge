@@ -33,7 +33,7 @@ class ActivityScreen extends StatelessWidget {
             indicatorColor: AppColors.mintGreen,
             tabs: [
               Tab(
-                text: 'Requests',
+                text: 'My Appointments',
               ),
               Tab(
                 text: 'My Sessions',

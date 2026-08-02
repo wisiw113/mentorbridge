@@ -6,20 +6,25 @@ import '../mentor_session_activity/participant_card.dart';
 
 class SessionParticipantsList extends StatelessWidget {
   final String sessionId;
+  final bool canKick;
 
   const SessionParticipantsList({
     super.key,
     required this.sessionId,
+    this.canKick = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final service = SessionService();
+    final SessionService service = SessionService();
 
-    return StreamBuilder<
-        List<SessionParticipantModel>>(
+    return StreamBuilder<List<SessionParticipantModel>>(
       stream: service.getParticipants(sessionId),
       builder: (context, snapshot) {
+        // =====================================================
+        // LOADING
+        // =====================================================
+
         if (snapshot.connectionState ==
             ConnectionState.waiting) {
           return const Padding(
@@ -29,6 +34,10 @@ class SessionParticipantsList extends StatelessWidget {
             ),
           );
         }
+
+        // =====================================================
+        // ERROR
+        // =====================================================
 
         if (snapshot.hasError) {
           return Padding(
@@ -45,8 +54,16 @@ class SessionParticipantsList extends StatelessWidget {
           );
         }
 
-        final participants =
+        // =====================================================
+        // PARTICIPANTS
+        // =====================================================
+
+        final List<SessionParticipantModel> participants =
             snapshot.data ?? [];
+
+        // =====================================================
+        // EMPTY
+        // =====================================================
 
         if (participants.isEmpty) {
           return Card(
@@ -64,7 +81,9 @@ class SessionParticipantsList extends StatelessWidget {
                       size: 50,
                       color: Color(0xFF10B981),
                     ),
+
                     SizedBox(height: 10),
+
                     Text(
                       "Chưa có người tham gia",
                       style: TextStyle(
@@ -72,7 +91,9 @@ class SessionParticipantsList extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+
                     SizedBox(height: 4),
+
                     Text(
                       "Danh sách mentee sẽ xuất hiện ở đây.",
                       textAlign: TextAlign.center,
@@ -87,22 +108,135 @@ class SessionParticipantsList extends StatelessWidget {
           );
         }
 
+        // =====================================================
+        // LIST
+        // =====================================================
+
         return Column(
-          children: participants
-              .map(
-                (participant) =>
-                    ParticipantCard(
-                  name: participant.menteeName,
-                  email: participant.menteeId,
-                  avatarUrl: null,
-                  joinedAt:
-                      participant.joinedAt,
-                  onTap: () {},
-                ),
-              )
-              .toList(),
+          children: participants.map((participant) {
+            return ParticipantCard(
+              name: participant.menteeName,
+              email: participant.menteeId,
+              avatarUrl: null,
+              joinedAt: participant.joinedAt,
+
+              onTap: () {},
+
+              // =================================================
+              // KICK
+              // =================================================
+
+              onKick: canKick
+                  ? () {
+                      _showKickDialog(
+                        context,
+                        service,
+                        participant,
+                      );
+                    }
+                  : null,
+            );
+          }).toList(),
         );
       },
     );
+  }
+
+  // ===========================================================
+  // KICK CONFIRMATION
+  // ===========================================================
+
+  Future<void> _showKickDialog(
+    BuildContext context,
+    SessionService service,
+    SessionParticipantModel participant,
+  ) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            "Kick mentee",
+          ),
+
+          content: Text(
+            "Bạn có chắc muốn kick "
+            "${participant.menteeName} khỏi Session này không?",
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text(
+                "Hủy",
+              ),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text(
+                "Kick",
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    // =========================================================
+    // CALL SERVICE
+    // =========================================================
+
+    try {
+      await service.kickParticipant(
+        sessionId: sessionId,
+        participantId: participant.id,
+      );
+
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Đã kick ${participant.menteeName} khỏi Session.",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst(
+              "Exception: ",
+              "",
+            ),
+          ),
+        ),
+      );
+    }
   }
 }

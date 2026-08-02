@@ -19,22 +19,50 @@ class SessionTab extends StatefulWidget {
   });
 
   @override
-  State<SessionTab> createState() =>
-      _SessionTabState();
+  State<SessionTab> createState() => _SessionTabState();
 }
 
-class _SessionTabState
-    extends State<SessionTab> {
+class _SessionTabState extends State<SessionTab> {
   final SessionService _sessionService =
       SessionService();
 
-  final TextEditingController
-      _searchController =
+  final TextEditingController _searchController =
       TextEditingController();
+
+  // =========================================================
+  // SEARCH
+  // =========================================================
 
   String _searchText = '';
 
+  // =========================================================
+  // FILTER
+  // =========================================================
+
   String _selectedFilter = 'all';
+
+  // =========================================================
+  // STREAM
+  // Tạo một lần duy nhất.
+  // Không tạo lại khi search.
+  // =========================================================
+
+  Stream<List<SessionModel>>? _sessionsStream;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final user =
+        FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      _sessionsStream =
+          _sessionService.getMentorSessions(
+        user.uid,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -53,7 +81,10 @@ class _SessionTabState
         _searchText.trim().toLowerCase();
 
     return sessions.where((session) {
+      // =====================================================
       // SEARCH
+      // =====================================================
+
       final matchSearch =
           search.isEmpty ||
           session.title
@@ -63,11 +94,14 @@ class _SessionTabState
               .toLowerCase()
               .contains(search);
 
+      // =====================================================
       // FILTER STATUS
+      // =====================================================
+
       final matchStatus =
           _selectedFilter == 'all' ||
           session.status
-                  .toLowerCase() ==
+              .toLowerCase() ==
               _selectedFilter
                   .toLowerCase();
 
@@ -78,13 +112,15 @@ class _SessionTabState
 
   // =========================================================
   // SEARCH CHANGED
+  // Giống SearchTab / PendingTab
   // =========================================================
 
   void _onSearchChanged(
     String value,
   ) {
     setState(() {
-      _searchText = value;
+      _searchText =
+          value.trim().toLowerCase();
     });
   }
 
@@ -104,8 +140,7 @@ class _SessionTabState
   // CREATE SESSION
   // =========================================================
 
-  Future<void>
-      _createSession() async {
+  Future<void> _createSession() async {
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -119,8 +154,7 @@ class _SessionTabState
   // OPEN SESSION DETAIL
   // =========================================================
 
-  Future<void>
-      _openSessionDetail(
+  Future<void> _openSessionDetail(
     SessionModel session,
   ) async {
     await Navigator.push(
@@ -133,6 +167,10 @@ class _SessionTabState
       ),
     );
   }
+
+  // =========================================================
+  // BUILD
+  // =========================================================
 
   @override
   Widget build(
@@ -153,17 +191,27 @@ class _SessionTabState
       );
     }
 
+    // =========================================================
+    // STREAM
+    // =========================================================
+
+    final stream = _sessionsStream;
+
+    if (stream == null) {
+      return const Center(
+        child: Text(
+          'Không thể tải Session.',
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor:
           Colors.transparent,
 
       body: StreamBuilder<
           List<SessionModel>>(
-        stream:
-            _sessionService
-                .getMentorSessions(
-          user.uid,
-        ),
+        stream: stream,
 
         builder: (
           context,
@@ -226,6 +274,10 @@ class _SessionTabState
               SessionSearchBar(
                 controller:
                     _searchController,
+
+                // Gõ tới đâu lọc tới đó
+                // Không debounce
+                // Không delay
                 onChanged:
                     _onSearchChanged,
               ),

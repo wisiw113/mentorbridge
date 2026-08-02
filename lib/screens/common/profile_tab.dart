@@ -178,7 +178,7 @@ class _ProfileTabState extends State<ProfileTab> {
               onPressed: () {
                 Navigator.pop(context, true);
               },
-              child: const Text("OK"),
+              child: const Text("Xác nhận"),
             ),
           ],
         );
@@ -217,7 +217,7 @@ class _ProfileTabState extends State<ProfileTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Upload ảnh thất bại: $e",
+            "Tải ảnh lên thất bại: $e",
           ),
         ),
       );
@@ -268,7 +268,7 @@ class _ProfileTabState extends State<ProfileTab> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                    "Cập nhật profile thành công",
+                    "Cập nhật thông tin thành công",
                   ),
                 ),
               );
@@ -292,8 +292,8 @@ class _ProfileTabState extends State<ProfileTab> {
   Future<void> logout() async {
     final confirm = await showConfirmDialog(
       context,
-      title: "Logout",
-      content: "Are you sure you want to logout?",
+      title: "Đăng xuất",
+      content: "Bạn có chắc chắn muốn đăng xuất không?",
     );
 
     if (!confirm) return;
@@ -319,53 +319,53 @@ class _ProfileTabState extends State<ProfileTab> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.softMint,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(
-            bottom: 30,
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 25),
-
-              ProfileAvatar(
-                name: name,
-                photoURL: photoURL,
-                isUploading: isUploading,
-                onCameraTap: pickAndUploadImage,
-              ),
-
-              const SizedBox(height: 12),
-
-              ProfileHeader(
-                name: name,
-                email: email,
-              ),
-
-              const SizedBox(height: 25),
-
-              ProfileStats(
-                role: role,
-                birthYear: birthYear,
-                gender: gender,
-              ),
-
-              const SizedBox(height: 25),
-
-              _buildProfileInfo(),
-
-              const SizedBox(height: 25),
-
-              ProfileActionButtons(
-                onEdit: editProfileDialog,
-                onLogout: logout,
-              ),
-            ],
-          ),
-        ),
+  backgroundColor: AppColors.softMint,
+  body: SafeArea(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.only(
+        bottom: 110,
       ),
-    );
+      child: Column(
+        children: [
+          const SizedBox(height: 25),
+
+          ProfileAvatar(
+            name: name,
+            photoURL: photoURL,
+            isUploading: isUploading,
+            onCameraTap: pickAndUploadImage,
+          ),
+
+          const SizedBox(height: 12),
+
+          ProfileHeader(
+            name: name,
+            email: email,
+          ),
+
+          const SizedBox(height: 25),
+
+          ProfileStats(
+            role: role,
+            birthYear: birthYear,
+            gender: gender,
+          ),
+
+          const SizedBox(height: 25),
+
+          _buildProfileInfo(),
+
+          const SizedBox(height: 25),
+
+          ProfileActionButtons(
+            onEdit: editProfileDialog,
+            onLogout: logout,
+          ),
+        ],
+      ),
+    ),
+  ),
+);
   }
 
   Widget _buildProfileInfo() {
@@ -386,7 +386,7 @@ class _ProfileTabState extends State<ProfileTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Profile Information",
+            "Thông tin cá nhân",
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -398,19 +398,19 @@ class _ProfileTabState extends State<ProfileTab> {
 
           _infoRow(
             Icons.school_outlined,
-            "Major",
+            "Chuyên ngành",
             major,
           ),
 
           _infoRow(
             Icons.menu_book_outlined,
-            "Student Year",
+            "Năm học",
             studentYear,
           ),
 
           _infoRow(
             Icons.info_outline,
-            "About Me",
+            "Giới thiệu bản thân",
             bio,
           ),
         ],
@@ -469,4 +469,4 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 }
-
+   

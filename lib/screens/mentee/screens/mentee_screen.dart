@@ -4,8 +4,11 @@ import '../tabs/home_tab.dart';
 import '../tabs/search_tab.dart';
 import '../tabs/activity_tab.dart';
 
-// shared profile
+// Shared profile
 import '../../common/profile_tab.dart';
+
+// Custom bottom navbar
+import '../../../widgets/common/custom_bottom_navbar.dart';
 
 class MenteeScreen extends StatefulWidget {
   const MenteeScreen({super.key});
@@ -27,35 +30,33 @@ class _MenteeScreenState extends State<MenteeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: pages,
-      ),
+      body: Stack(
+        children: [
+          // ==========================================
+          // CONTENT
+          // ==========================================
+          Positioned.fill(
+            child: IndexedStack(
+              index: currentIndex,
+              children: pages,
+            ),
+          ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: "Search",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.hourglass_bottom),
-            label: "Status",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
+          // ==========================================
+          // FLOATING NAVBAR
+          // ==========================================
+          Positioned(
+            left: 10,
+            right: 10,
+            bottom: 10,
+            child: XBottomNavbar(
+              currentIndex: currentIndex,
+              onTap: (index) {
+                setState(() {
+                  currentIndex = index;
+                });
+              },
+            ),
           ),
         ],
       ),

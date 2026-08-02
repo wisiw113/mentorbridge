@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../models/appointment_rating_model.dart';
 import 'mentor_review_card.dart';
 
-class MentorReviewList extends StatelessWidget {
+class MentorReviewList extends StatefulWidget {
   final List<AppointmentRatingModel> reviews;
 
   final bool isLoading;
@@ -23,12 +24,187 @@ class MentorReviewList extends StatelessWidget {
   });
 
   @override
+  State<MentorReviewList> createState() =>
+      _MentorReviewListState();
+}
+
+class _MentorReviewListState
+    extends State<MentorReviewList> {
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
+
+  // =========================================================
+  // CACHE USER INFO
+  // =========================================================
+
+  final Map<String, Map<String, dynamic>>
+      _reviewerCache = {};
+
+  bool _isLoadingReviewers = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReviewerInfo();
+  }
+
+  @override
+  void didUpdateWidget(
+    covariant MentorReviewList oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.reviews != widget.reviews) {
+      _loadReviewerInfo();
+    }
+  }
+
+  // =========================================================
+  // LOAD REVIEWER INFO
+  // =========================================================
+
+  Future<void> _loadReviewerInfo() async {
+    if (widget.reviews.isEmpty) {
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingReviewers = true;
+      });
+    }
+
+    // Chỉ lấy những review đang hiển thị
+    final visibleReviews = widget.reviews
+        .take(widget.maxVisibleReviews)
+        .toList();
+
+    // Lấy danh sách menteeId duy nhất
+    final menteeIds = visibleReviews
+        .map((review) => review.menteeId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    try {
+      for (final menteeId in menteeIds) {
+        // Nếu đã có trong cache thì không query lại
+        if (_reviewerCache.containsKey(menteeId)) {
+          continue;
+        }
+
+        final userDoc = await _firestore
+            .collection('users')
+            .doc(menteeId)
+            .get();
+
+        if (userDoc.exists &&
+            userDoc.data() != null) {
+          final data = userDoc.data()!;
+
+          _reviewerCache[menteeId] = {
+            'name':
+                (data['name'] ?? '').toString(),
+
+            'email':
+                (data['email'] ?? '').toString(),
+
+            'photoURL':
+                data['photoURL']?.toString(),
+          };
+        } else {
+          // Nếu không tìm thấy user
+          _reviewerCache[menteeId] = {
+            'name': '',
+            'email': '',
+            'photoURL': null,
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint(
+        'Error loading reviewer information: $e',
+      );
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingReviewers = false;
+    });
+  }
+
+  // =========================================================
+  // GET REVIEWER NAME
+  // =========================================================
+
+  String _getReviewerName(
+    AppointmentRatingModel review,
+  ) {
+    final userData =
+        _reviewerCache[review.menteeId];
+
+    // Ưu tiên tên lấy từ users
+    final name =
+        userData?['name']?.toString() ?? '';
+
+    if (name.trim().isNotEmpty) {
+      return name;
+    }
+
+    // Nếu không lấy được thì dùng tên được lưu
+    // trong AppointmentRatingModel
+    if (review.menteeName.trim().isNotEmpty) {
+      return review.menteeName;
+    }
+
+    return 'Anonymous';
+  }
+
+  // =========================================================
+  // GET REVIEWER EMAIL
+  // =========================================================
+
+  String _getReviewerEmail(
+    AppointmentRatingModel review,
+  ) {
+    final userData =
+        _reviewerCache[review.menteeId];
+
+    return userData?['email']?.toString() ?? '';
+  }
+
+  // =========================================================
+  // GET REVIEWER AVATAR
+  // =========================================================
+
+  String? _getReviewerAvatar(
+    AppointmentRatingModel review,
+  ) {
+    final userData =
+        _reviewerCache[review.menteeId];
+
+    final photoURL =
+        userData?['photoURL']?.toString();
+
+    if (photoURL != null &&
+        photoURL.trim().isNotEmpty) {
+      return photoURL;
+    }
+
+    return null;
+  }
+
+  // =========================================================
+  // BUILD
+  // =========================================================
+
+  @override
   Widget build(BuildContext context) {
     // =====================================================
-    // LOADING
+    // LOADING RATING
     // =====================================================
 
-    if (isLoading) {
+    if (widget.isLoading) {
       return _buildLoadingState();
     }
 
@@ -36,8 +212,9 @@ class MentorReviewList extends StatelessWidget {
     // VISIBLE REVIEWS
     // =====================================================
 
-    final visibleReviews =
-        reviews.take(maxVisibleReviews).toList();
+    final visibleReviews = widget.reviews
+        .take(widget.maxVisibleReviews)
+        .toList();
 
     return Container(
       width: double.infinity,
@@ -50,7 +227,8 @@ class MentorReviewList extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.04),
+            color:
+                Colors.black.withOpacity(.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -104,8 +282,9 @@ class MentorReviewList extends StatelessWidget {
                     const SizedBox(height: 2),
 
                     Text(
-                      "${reviews.length} review${reviews.length > 1 ? 's' : ''}",
-                      style: const TextStyle(
+                      "${widget.reviews.length} review${widget.reviews.length > 1 ? 's' : ''}",
+                      style:
+                          const TextStyle(
                         fontSize: 13,
                         color:
                             AppColors.gray,
@@ -123,14 +302,14 @@ class MentorReviewList extends StatelessWidget {
           // EMPTY
           // =================================================
 
-          if (reviews.isEmpty)
+          if (widget.reviews.isEmpty)
             _buildEmptyState(),
 
           // =================================================
           // REVIEW LIST
           // =================================================
 
-          if (reviews.isNotEmpty)
+          if (widget.reviews.isNotEmpty)
             ...visibleReviews.map(
               (review) {
                 return Padding(
@@ -139,16 +318,41 @@ class MentorReviewList extends StatelessWidget {
                     bottom: 12,
                   ),
                   child: MentorReviewCard(
+                    // Tên:
+                    // Lấy từ users/{menteeId}
+                    // Nếu không có thì dùng menteeName
                     reviewerName:
-                        review.menteeName,
+                        _getReviewerName(
+                      review,
+                    ),
+
+                    // Email:
+                    // Lấy trực tiếp từ users/{menteeId}
+                    reviewerEmail:
+                        _getReviewerEmail(
+                      review,
+                    ),
+
+                    // Avatar:
+                    // Lấy photoURL từ users/{menteeId}
                     reviewerAvatarUrl:
-                        null,
+                        _getReviewerAvatar(
+                      review,
+                    ),
+
+                    // Rating
                     rating:
                         review.rating,
+
+                    // Comment
                     comment:
                         review.comment,
+
+                    // Review type
                     reviewType:
                         "Appointment",
+
+                    // Created date
                     createdAt:
                         review.createdAt,
                   ),
@@ -157,11 +361,36 @@ class MentorReviewList extends StatelessWidget {
             ),
 
           // =================================================
+          // LOADING REVIEWER INFO
+          // =================================================
+
+          if (_isLoadingReviewers &&
+              widget.reviews.isNotEmpty)
+            const Padding(
+              padding:
+                  EdgeInsets.symmetric(
+                vertical: 8,
+              ),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child:
+                      CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color:
+                        AppColors.deepGreen,
+                  ),
+                ),
+              ),
+            ),
+
+          // =================================================
           // VIEW ALL
           // =================================================
 
-          if (reviews.length >
-              maxVisibleReviews)
+          if (widget.reviews.length >
+              widget.maxVisibleReviews)
             _buildViewAllButton(),
         ],
       ),
@@ -192,7 +421,8 @@ class MentorReviewList extends StatelessWidget {
             color:
                 Colors.black.withOpacity(.04),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset:
+                const Offset(0, 4),
           ),
         ],
       ),
@@ -203,7 +433,9 @@ class MentorReviewList extends StatelessWidget {
               color:
                   AppColors.deepGreen,
             ),
+
             SizedBox(height: 15),
+
             Text(
               "Đang tải đánh giá...",
               style: TextStyle(
@@ -243,7 +475,9 @@ class MentorReviewList extends StatelessWidget {
             size: 42,
             color: AppColors.gray,
           ),
+
           SizedBox(height: 10),
+
           Text(
             "Chưa có đánh giá nào",
             style: TextStyle(
@@ -254,7 +488,9 @@ class MentorReviewList extends StatelessWidget {
                   AppColors.darkGray,
             ),
           ),
+
           SizedBox(height: 5),
+
           Text(
             "Mentor chưa nhận được đánh giá.",
             textAlign:
@@ -278,7 +514,8 @@ class MentorReviewList extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: onViewAll,
+        onPressed:
+            widget.onViewAll,
         style:
             OutlinedButton.styleFrom(
           foregroundColor:

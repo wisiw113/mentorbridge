@@ -67,7 +67,7 @@ class _ScheduleTabState extends State<ScheduleTab> {
       builder: (context) {
         return AlertDialog(
           title: const Text(
-            "Appointment Details",
+            "Chi tiết cuộc hẹn",
             style: TextStyle(
               fontWeight: FontWeight.bold,
             ),
@@ -77,7 +77,7 @@ class _ScheduleTabState extends State<ScheduleTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Mentee: ${appointment.menteeName}",
+                "Người học: ${appointment.menteeName}",
               ),
               const SizedBox(height: 12),
               Row(
@@ -201,7 +201,7 @@ class _ScheduleTabState extends State<ScheduleTab> {
         if (appointmentSnapshot.hasError) {
           return Center(
             child: Text(
-              "Lỗi tải Appointment:\n"
+              "Lỗi tải dữ liệu cuộc hẹn:\n"
               "${appointmentSnapshot.error}",
               textAlign: TextAlign.center,
             ),
@@ -223,7 +223,7 @@ class _ScheduleTabState extends State<ScheduleTab> {
             if (sessionSnapshot.hasError) {
               return Center(
                 child: Text(
-                  "Lỗi tải Session:\n"
+                  "Lỗi tải dữ liệu buổi học nhóm:\n"
                   "${sessionSnapshot.error}",
                   textAlign: TextAlign.center,
                 ),
@@ -309,12 +309,12 @@ class _ScheduleTabState extends State<ScheduleTab> {
                           ),
                           children: [
                             const SectionTitle(
-                              title: "Appointments",
+                              title: "Cuộc hẹn",
                             ),
                             if (selectedAppointments.isEmpty)
                               const ScheduleEmptyCard(
                                 message:
-                                    "Không có Appointment trong ngày này.",
+                                    "Không có cuộc hẹn nào trong ngày này.",
                               ),
                             ...selectedAppointments.map(
                               (appointment) {
@@ -331,12 +331,12 @@ class _ScheduleTabState extends State<ScheduleTab> {
                             ),
                             const SizedBox(height: 20),
                             const SectionTitle(
-                              title: "Group Sessions",
+                              title: "Buổi học nhóm",
                             ),
                             if (selectedSessions.isEmpty)
                               const ScheduleEmptyCard(
                                 message:
-                                    "Không có Session trong ngày này.",
+                                    "Không có buổi học nhóm nào trong ngày này.",
                               ),
                             ...selectedSessions.map(
                               (session) {
@@ -380,3 +380,4 @@ class _ScheduleTabState extends State<ScheduleTab> {
     );
   }
 }
+   

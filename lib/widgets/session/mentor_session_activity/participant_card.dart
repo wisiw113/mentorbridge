@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -10,6 +11,12 @@ class ParticipantCard extends StatelessWidget {
 
   final VoidCallback? onTap;
 
+  // =========================================================
+  // KICK
+  // =========================================================
+
+  final VoidCallback? onKick;
+
   const ParticipantCard({
     super.key,
     required this.name,
@@ -17,6 +24,7 @@ class ParticipantCard extends StatelessWidget {
     this.avatarUrl,
     this.joinedAt,
     this.onTap,
+    this.onKick,
   });
 
   String formatDate(DateTime? date) {
@@ -43,6 +51,10 @@ class ParticipantCard extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
 
+        // =====================================================
+        // AVATAR
+        // =====================================================
+
         leading: CircleAvatar(
           radius: 26,
           backgroundColor: AppColors.lightMint,
@@ -58,6 +70,10 @@ class ParticipantCard extends StatelessWidget {
               : null,
         ),
 
+        // =====================================================
+        // NAME
+        // =====================================================
+
         title: Text(
           name,
           style: const TextStyle(
@@ -66,6 +82,10 @@ class ParticipantCard extends StatelessWidget {
             fontSize: 16,
           ),
         ),
+
+        // =====================================================
+        // INFO
+        // =====================================================
 
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,11 +123,30 @@ class ParticipantCard extends StatelessWidget {
           ],
         ),
 
-        trailing: const Icon(
-          Icons.chevron_right,
-          color: AppColors.mintGreen,
-        ),
+        // =====================================================
+        // KICK BUTTON
+        // =====================================================
+
+        trailing: onKick != null
+            ? IconButton(
+                tooltip: "Kick mentee",
+                onPressed: onKick,
+                style: IconButton.styleFrom(
+                  backgroundColor:
+                      Colors.red.withOpacity(0.08),
+                  foregroundColor: Colors.red,
+                ),
+                icon: const Icon(
+                  Icons.person_remove_outlined,
+                  size: 21,
+                ),
+              )
+            : const Icon(
+                Icons.chevron_right,
+                color: AppColors.mintGreen,
+              ),
       ),
     );
   }
 }
+
