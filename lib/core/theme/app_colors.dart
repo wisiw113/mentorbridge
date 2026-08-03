@@ -20,7 +20,7 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B);
 
   // ===== BORDER / DIVIDER =====
-  static const Color border = Color(0xFFD1FAE5);
+  static const Color border = Color.fromARGB(255, 0, 0, 0);
 
   // =====================================================
   // CALENDAR
