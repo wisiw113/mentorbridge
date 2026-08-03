@@ -1,3 +1,4 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -20,10 +21,12 @@ class ScheduleTab extends StatefulWidget {
   const ScheduleTab({super.key});
 
   @override
-  State<ScheduleTab> createState() => _ScheduleTabState();
+  State<ScheduleTab> createState() =>
+      _ScheduleTabState();
 }
 
-class _ScheduleTabState extends State<ScheduleTab> {
+class _ScheduleTabState
+    extends State<ScheduleTab> {
   final AppointmentService _appointmentService =
       AppointmentService();
 
@@ -46,7 +49,10 @@ class _ScheduleTabState extends State<ScheduleTab> {
     );
   }
 
-  bool isSameDate(DateTime a, DateTime b) {
+  bool isSameDate(
+    DateTime a,
+    DateTime b,
+  ) {
     return a.year == b.year &&
         a.month == b.month &&
         a.day == b.day;
@@ -74,7 +80,8 @@ class _ScheduleTabState extends State<ScheduleTab> {
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               Text(
                 "Người học: ${appointment.menteeName}",
@@ -143,19 +150,22 @@ class _ScheduleTabState extends State<ScheduleTab> {
     BuildContext context,
     List<DateTime> bookedDates,
   ) async {
-    final pickedDate = await showDialog<DateTime>(
+    final pickedDate =
+        await showDialog<DateTime>(
       context: context,
       builder: (dialogContext) {
         return Dialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius:
+                BorderRadius.circular(20),
           ),
           child: SizedBox(
             height: 430,
             child: MonthCalendarWidget(
               initialMonth:
-                  selectedDate ?? DateTime.now(),
+                  selectedDate ??
+                      DateTime.now(),
               bookedDates: bookedDates,
               onDateSelected: (date) {
                 Navigator.pop(
@@ -178,7 +188,8 @@ class _ScheduleTabState extends State<ScheduleTab> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user =
+        FirebaseAuth.instance.currentUser;
 
     if (user == null) {
       return const Center(
@@ -186,15 +197,25 @@ class _ScheduleTabState extends State<ScheduleTab> {
       );
     }
 
-    return StreamBuilder<List<AppointmentModel>>(
-      stream: _appointmentService.getMentorRequests(
+    return StreamBuilder<
+        List<AppointmentModel>>(
+      // FIX:
+      // getMentorRequests() không tồn tại
+      // trong AppointmentService.
+      stream: _appointmentService
+          .getMentorAppointments(
         user.uid,
       ),
-      builder: (context, appointmentSnapshot) {
-        if (appointmentSnapshot.connectionState ==
+      builder: (
+        context,
+        appointmentSnapshot,
+      ) {
+        if (appointmentSnapshot
+                .connectionState ==
             ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(),
+            child:
+                CircularProgressIndicator(),
           );
         }
 
@@ -203,20 +224,28 @@ class _ScheduleTabState extends State<ScheduleTab> {
             child: Text(
               "Lỗi tải dữ liệu cuộc hẹn:\n"
               "${appointmentSnapshot.error}",
-              textAlign: TextAlign.center,
+              textAlign:
+                  TextAlign.center,
             ),
           );
         }
 
-        return StreamBuilder<List<SessionModel>>(
-          stream: _sessionService.getMentorSessions(
+        return StreamBuilder<
+            List<SessionModel>>(
+          stream: _sessionService
+              .getMentorSessions(
             user.uid,
           ),
-          builder: (context, sessionSnapshot) {
-            if (sessionSnapshot.connectionState ==
+          builder: (
+            context,
+            sessionSnapshot,
+          ) {
+            if (sessionSnapshot
+                    .connectionState ==
                 ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(),
+                child:
+                    CircularProgressIndicator(),
               );
             }
 
@@ -225,13 +254,15 @@ class _ScheduleTabState extends State<ScheduleTab> {
                 child: Text(
                   "Lỗi tải dữ liệu buổi học nhóm:\n"
                   "${sessionSnapshot.error}",
-                  textAlign: TextAlign.center,
+                  textAlign:
+                      TextAlign.center,
                 ),
               );
             }
 
             final appointments =
-                appointmentSnapshot.data ?? [];
+                appointmentSnapshot.data ??
+                    [];
 
             final sessions =
                 sessionSnapshot.data ?? [];
@@ -240,54 +271,68 @@ class _ScheduleTabState extends State<ScheduleTab> {
               ...appointments
                   .where(
                     (appointment) =>
-                        appointment.status == "accepted" ||
-                        appointment.status == "completed",
+                        appointment.status ==
+                            "accepted" ||
+                        appointment.status ==
+                            "completed",
                   )
                   .map(
                     (appointment) =>
-                        parseDate(appointment.date),
+                        parseDate(
+                      appointment.date,
+                    ),
                   ),
               ...sessions.map(
                 (session) =>
-                    parseDate(session.date),
+                    parseDate(
+                  session.date,
+                ),
               ),
             ];
 
             final selectedAppointments =
                 selectedDate == null
                     ? <AppointmentModel>[]
-                    : appointments.where(
-                        (appointment) {
-                          return isSameDate(
-                            parseDate(
-                              appointment.date,
-                            ),
-                            selectedDate!,
-                          );
-                        },
-                      ).toList();
+                    : appointments
+                        .where(
+                          (appointment) {
+                            return isSameDate(
+                              parseDate(
+                                appointment.date,
+                              ),
+                              selectedDate!,
+                            );
+                          },
+                        )
+                        .toList();
 
             final selectedSessions =
                 selectedDate == null
                     ? <SessionModel>[]
-                    : sessions.where(
-                        (session) {
-                          return isSameDate(
-                            parseDate(
-                              session.date,
-                            ),
-                            selectedDate!,
-                          );
-                        },
-                      ).toList();
+                    : sessions
+                        .where(
+                          (session) {
+                            return isSameDate(
+                              parseDate(
+                                session.date,
+                              ),
+                              selectedDate!,
+                            );
+                          },
+                        )
+                        .toList();
 
             return Column(
               children: [
                 ScheduleDateSelector(
-                  selectedDate: selectedDate,
-                  dateText: selectedDate == null
-                      ? "Chọn ngày"
-                      : formatDate(selectedDate!),
+                  selectedDate:
+                      selectedDate,
+                  dateText:
+                      selectedDate == null
+                          ? "Chọn ngày"
+                          : formatDate(
+                              selectedDate!,
+                            ),
                   onTap: () {
                     _selectDate(
                       context,
@@ -311,15 +356,18 @@ class _ScheduleTabState extends State<ScheduleTab> {
                             const SectionTitle(
                               title: "Cuộc hẹn",
                             ),
-                            if (selectedAppointments.isEmpty)
+                            if (selectedAppointments
+                                .isEmpty)
                               const ScheduleEmptyCard(
                                 message:
                                     "Không có cuộc hẹn nào trong ngày này.",
                               ),
-                            ...selectedAppointments.map(
+                            ...selectedAppointments
+                                .map(
                               (appointment) {
                                 return AppointmentScheduleCard(
-                                  appointment: appointment,
+                                  appointment:
+                                      appointment,
                                   onTap: () {
                                     _showAppointmentDetail(
                                       context,
@@ -329,38 +377,52 @@ class _ScheduleTabState extends State<ScheduleTab> {
                                 );
                               },
                             ),
-                            const SizedBox(height: 20),
-                            const SectionTitle(
-                              title: "Buổi học nhóm",
+                            const SizedBox(
+                              height: 20,
                             ),
-                            if (selectedSessions.isEmpty)
+                            const SectionTitle(
+                              title:
+                                  "Buổi học nhóm",
+                            ),
+                            if (selectedSessions
+                                .isEmpty)
                               const ScheduleEmptyCard(
                                 message:
                                     "Không có buổi học nhóm nào trong ngày này.",
                               ),
-                            ...selectedSessions.map(
+                            ...selectedSessions
+                                .map(
                               (session) {
                                 return SessionCard(
-                                  title: session.title,
+                                  title:
+                                      session.title,
                                   description:
-                                      session.description,
-                                  date: session.date,
+                                      session
+                                          .description,
+                                  date:
+                                      session.date,
                                   startTime:
-                                      session.startTime,
+                                      session
+                                          .startTime,
                                   endTime:
                                       session.endTime,
                                   bookedSlots:
-                                      session.bookedSlots,
+                                      session
+                                          .bookedSlots,
                                   maxSlots:
-                                      session.maxSlots,
-                                  status: session.status,
+                                      session
+                                          .maxSlots,
+                                  status:
+                                      session.status,
                                   onTap: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            SessionDetailScreen(
-                                          session: session,
+                                        builder:
+                                            (_) =>
+                                                SessionDetailScreen(
+                                          session:
+                                              session,
                                         ),
                                       ),
                                     );
@@ -380,4 +442,4 @@ class _ScheduleTabState extends State<ScheduleTab> {
     );
   }
 }
-   
+

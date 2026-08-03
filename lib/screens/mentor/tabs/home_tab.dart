@@ -3,17 +3,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_colors.dart';
+
 import '../../../models/appointment_model.dart';
 import '../../../models/session_model.dart';
 import '../../../models/schedule_item.dart';
+
 import '../../../services/appointment_service.dart';
 import '../../../services/session_service.dart';
+
 import '../../../widgets/common/greeting_card.dart';
 import '../../../widgets/mentor/mentor_home/request_card.dart';
 import '../../../widgets/mentor/mentor_home/summary_card.dart';
 import '../../../widgets/mentor/mentor_home/upcoming_appointment_card.dart';
 import '../../../widgets/mentor/mentor_home/upcoming_session.dart';
 import '../../../widgets/common/weekly_schedule_card.dart';
+
+import '../../../screens/common/appointment_detail_screen.dart';
 import '../../../screens/mentor/screens/session_detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
@@ -22,6 +27,10 @@ class HomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
+    // =========================================================
+    // CHƯA ĐĂNG NHẬP
+    // =========================================================
 
     if (user == null) {
       return const Scaffold(
@@ -34,155 +43,295 @@ class HomeTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.lightMint,
       body: SafeArea(
-        child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        child: FutureBuilder<
+            DocumentSnapshot<Map<String, dynamic>>>(
           future: FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
               .get(),
-          builder: (context, userSnapshot) {
-            if (userSnapshot.connectionState == ConnectionState.waiting) {
+          builder: (
+            context,
+            userSnapshot,
+          ) {
+            // =================================================
+            // LOADING USER
+            // =================================================
+
+            if (userSnapshot.connectionState ==
+                ConnectionState.waiting) {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             }
 
+            // =================================================
+            // ERROR USER
+            // =================================================
+
             if (userSnapshot.hasError) {
               return const Center(
-                child: Text("Không thể tải thông tin người dùng"),
+                child: Text(
+                  "Không thể tải thông tin người dùng",
+                ),
               );
             }
 
-            final userData = userSnapshot.data?.data();
+            final userData =
+                userSnapshot.data?.data();
 
-            // Lấy name từ Firestore
-            final mentorName = userData?['name'] ?? 'Mentor';
+            final mentorName =
+                userData?['name'] ?? 'Mentor';
 
-            return StreamBuilder<List<AppointmentModel>>(
-              stream: AppointmentService().getMentorRequests(user.uid),
-              builder: (context, appointmentSnapshot) {
+            // =================================================
+            // APPOINTMENTS
+            // =================================================
+
+            return StreamBuilder<
+                List<AppointmentModel>>(
+              stream: AppointmentService()
+                  .getMentorAppointments(
+                user.uid,
+              ),
+              builder: (
+                context,
+                appointmentSnapshot,
+              ) {
+                // =================================================
+                // LOADING APPOINTMENT
+                // =================================================
+
                 if (!appointmentSnapshot.hasData) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
                 }
 
-                final appointments = appointmentSnapshot.data!;
+                final appointments =
+                    appointmentSnapshot.data!;
 
-                return StreamBuilder<List<SessionModel>>(
-                  stream: SessionService().getMentorSessions(user.uid),
-                  builder: (context, sessionSnapshot) {
+                // =================================================
+                // SESSIONS
+                // =================================================
+
+                return StreamBuilder<
+                    List<SessionModel>>(
+                  stream: SessionService()
+                      .getMentorSessions(
+                    user.uid,
+                  ),
+                  builder: (
+                    context,
+                    sessionSnapshot,
+                  ) {
+                    // =================================================
+                    // LOADING SESSION
+                    // =================================================
+
                     if (!sessionSnapshot.hasData) {
                       return const Center(
-                        child: CircularProgressIndicator(),
+                        child:
+                            CircularProgressIndicator(),
                       );
                     }
 
-                    final sessions = sessionSnapshot.data!;
+                    final sessions =
+                        sessionSnapshot.data!;
 
-                    final upcomingAppointments = appointments
-                        .where((e) => e.status == "accepted")
-                        .toList();
+                    // =================================================
+                    // UPCOMING APPOINTMENTS
+                    // =================================================
 
-                    final upcomingSessions = sessions
-                        .where((e) => e.status == "open")
-                        .toList();
+                    final upcomingAppointments =
+                        appointments
+                            .where(
+                              (e) =>
+                                  e.status ==
+                                  "accepted",
+                            )
+                            .toList();
+
+                    // =================================================
+                    // UPCOMING SESSIONS
+                    // =================================================
+
+                    final upcomingSessions =
+                        sessions
+                            .where(
+                              (e) =>
+                                  e.status ==
+                                  "open",
+                            )
+                            .toList();
+
+                    // =================================================
+                    // WEEKLY SCHEDULE
+                    // =================================================
 
                     final scheduleItems = [
-                      ...sessions.map(ScheduleItem.fromSession),
-                      ...appointments.map(ScheduleItem.fromAppointment),
+                      ...sessions.map(
+                        ScheduleItem.fromSession,
+                      ),
+                      ...appointments.map(
+                        ScheduleItem.fromAppointment,
+                      ),
                     ];
 
+                    // =================================================
+                    // UI
+                    // =================================================
+
                     return ListView(
-                      padding: const EdgeInsets.all(16),
+                      padding:
+                          const EdgeInsets.all(16),
                       children: [
-                        // Greeting
+                        // =================================================
+                        // GREETING
+                        // =================================================
+
                         GreetingCard(
                           userName: mentorName,
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(
+                          height: 20,
+                        ),
 
-                        // Summary row 1
+                        // =================================================
+                        // SUMMARY ROW 1
+                        // =================================================
+
                         Row(
                           children: [
                             Expanded(
                               child: SummaryCard(
                                 title: "Sessions",
-                                value: sessions.length.toString(),
-                                icon: Icons.groups,
-                                color: Colors.green,
+                                value:
+                                    sessions.length
+                                        .toString(),
+                                icon:
+                                    Icons.groups,
+                                color:
+                                    Colors.green,
                               ),
                             ),
-                            const SizedBox(width: 12),
+
+                            const SizedBox(
+                              width: 12,
+                            ),
+
                             Expanded(
                               child: SummaryCard(
-                                title: "Appointments",
-                                value: appointments.length.toString(),
-                                icon: Icons.calendar_today,
-                                color: Colors.blue,
+                                title:
+                                    "Appointments",
+                                value:
+                                    appointments
+                                        .length
+                                        .toString(),
+                                icon: Icons
+                                    .calendar_today,
+                                color:
+                                    Colors.blue,
                               ),
                             ),
                           ],
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(
+                          height: 12,
+                        ),
 
-                        // Summary row 2
+                        // =================================================
+                        // SUMMARY ROW 2
+                        // =================================================
+
                         Row(
                           children: [
                             Expanded(
                               child: SummaryCard(
                                 title: "Pending",
-                                value: appointments
-                                    .where((e) => e.status == "pending")
-                                    .length
-                                    .toString(),
-                                icon: Icons.pending_actions,
-                                color: Colors.orange,
+                                value:
+                                    appointments
+                                        .where(
+                                          (e) =>
+                                              e.status ==
+                                              "pending",
+                                        )
+                                        .length
+                                        .toString(),
+                                icon: Icons
+                                    .pending_actions,
+                                color:
+                                    Colors.orange,
                               ),
                             ),
-                            const SizedBox(width: 12),
+
+                            const SizedBox(
+                              width: 12,
+                            ),
+
                             Expanded(
                               child: SummaryCard(
-                                title: "Completed",
-                                value: appointments
-                                    .where((e) => e.status == "completed")
-                                    .length
-                                    .toString(),
-                                icon: Icons.check_circle,
-                                color: Colors.purple,
+                                title:
+                                    "Completed",
+                                value:
+                                    appointments
+                                        .where(
+                                          (e) =>
+                                              e.status ==
+                                              "completed",
+                                        )
+                                        .length
+                                        .toString(),
+                                icon: Icons
+                                    .check_circle,
+                                color:
+                                    Colors.purple,
                               ),
                             ),
                           ],
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(
+                          height: 20,
+                        ),
 
-                        // Appointment requests
+                        // =================================================
+                        // APPOINTMENT REQUESTS
+                        // =================================================
+
                         RequestCard(
                           requests: appointments,
                         ),
 
-                        // Upcoming appointment
-                        if (upcomingAppointments.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          UpcomingAppointmentCard(
-                            appointment: upcomingAppointments.first,
-                            onPressed: () {},
-                          ),
-                        ],
+                        // =================================================
+                        // UPCOMING APPOINTMENT
+                        // =================================================
 
-                        // Upcoming session
-                        if (upcomingSessions.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          UpcomingSessionCard(
-                            session: upcomingSessions.first,
+                        if (upcomingAppointments
+                            .isNotEmpty) ...[
+                          const SizedBox(
+                            height: 20,
+                          ),
+
+                          UpcomingAppointmentCard(
+                            appointment:
+                                upcomingAppointments
+                                    .first,
+
+                            // =================================================
+                            // BẤM VIEW DETAILS
+                            // -> APPOINTMENT DETAIL SCREEN
+                            // =================================================
+
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SessionDetailScreen(
-                                    session: upcomingSessions.first,
+                                  builder: (context) =>
+                                      AppointmentDetailScreen(
+                                    appointment:
+                                        upcomingAppointments
+                                            .first,
                                   ),
                                 ),
                               );
@@ -190,11 +339,54 @@ class HomeTab extends StatelessWidget {
                           ),
                         ],
 
-                        const SizedBox(height: 20),
+                        // =================================================
+                        // UPCOMING SESSION
+                        // =================================================
 
-                        // Weekly schedule
+                        if (upcomingSessions
+                            .isNotEmpty) ...[
+                          const SizedBox(
+                            height: 20,
+                          ),
+
+                          UpcomingSessionCard(
+                            session:
+                                upcomingSessions
+                                    .first,
+
+                            // =================================================
+                            // BẤM VIEW DETAILS
+                            // -> SESSION DETAIL SCREEN
+                            // =================================================
+
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          SessionDetailScreen(
+                                    session:
+                                        upcomingSessions
+                                            .first,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+
+                        const SizedBox(
+                          height: 20,
+                        ),
+
+                        // =================================================
+                        // WEEKLY SCHEDULE
+                        // =================================================
+
                         WeeklyScheduleCard(
-                          schedules: scheduleItems,
+                          schedules:
+                              scheduleItems,
                           onDayTap: (day) {},
                           onViewAll: () {},
                         ),

@@ -15,7 +15,9 @@ class RequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pendingRequests = requests
-        .where((request) => request.status == "pending")
+        .where(
+          (request) => request.status == "pending",
+        )
         .toList();
 
     if (pendingRequests.isEmpty) {
@@ -38,6 +40,7 @@ class RequestCard extends StatelessWidget {
                   Icons.person_add_alt_1_rounded,
                   color: AppColors.deepGreen,
                 ),
+
                 const SizedBox(width: 8),
 
                 const Expanded(
@@ -67,13 +70,15 @@ class RequestCard extends StatelessWidget {
             const SizedBox(height: 16),
 
             ...pendingRequests.take(3).map(
-                  (appointment) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: RequestItem(
-                      appointment: appointment,
-                    ),
-                  ),
+              (appointment) => Padding(
+                padding: const EdgeInsets.only(
+                  bottom: 12,
                 ),
+                child: RequestItem(
+                  appointment: appointment,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -81,7 +86,11 @@ class RequestCard extends StatelessWidget {
   }
 }
 
-class RequestItem extends StatelessWidget {
+// =============================================================
+// REQUEST ITEM
+// =============================================================
+
+class RequestItem extends StatefulWidget {
   final AppointmentModel appointment;
 
   const RequestItem({
@@ -89,26 +98,219 @@ class RequestItem extends StatelessWidget {
     required this.appointment,
   });
 
-  Future<void> _updateStatus(String status) async {
-    await AppointmentService().updateStatus(
-      appointment.id,
-      status,
-    );
+  @override
+  State<RequestItem> createState() =>
+      _RequestItemState();
+}
+
+class _RequestItemState
+    extends State<RequestItem> {
+  final AppointmentService _service =
+      AppointmentService();
+
+  bool _isLoading = false;
+
+  // ===========================================================
+  // ACCEPT
+  // ===========================================================
+
+  Future<void> _acceptAppointment() async {
+    if (_isLoading) {
+      return;
+    }
+
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      await _service.acceptAppointment(
+        widget.appointment.id,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Đã chấp nhận yêu cầu.",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Không thể chấp nhận yêu cầu: $e",
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
+
+  // ===========================================================
+  // REJECT
+  // ===========================================================
+
+  Future<void> _rejectAppointment() async {
+    if (_isLoading) {
+      return;
+    }
+
+    final reason = await _showReasonDialog();
+
+    if (reason == null ||
+        reason.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      await _service.rejectAppointment(
+        appointmentId:
+            widget.appointment.id,
+        reason: reason.trim(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Đã từ chối yêu cầu.",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Không thể từ chối yêu cầu: $e",
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // ===========================================================
+  // REASON DIALOG
+  // ===========================================================
+
+  Future<String?> _showReasonDialog() async {
+    final controller =
+        TextEditingController();
+
+    final result =
+        await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            "Từ chối Appointment",
+          ),
+
+          content: TextField(
+            controller: controller,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText:
+                  "Nhập lý do từ chối...",
+              border:
+                  OutlineInputBorder(),
+            ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                );
+              },
+              child: const Text(
+                "Hủy",
+              ),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                final reason =
+                    controller.text.trim();
+
+                if (reason.isEmpty) {
+                  return;
+                }
+
+                Navigator.pop(
+                  dialogContext,
+                  reason,
+                );
+              },
+              child: const Text(
+                "Xác nhận",
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+
+    return result;
+  }
+
+  // ===========================================================
+  // BUILD
+  // ===========================================================
 
   @override
   Widget build(BuildContext context) {
+    final appointment =
+        widget.appointment;
+
     return Container(
       padding: const EdgeInsets.all(14),
+
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius:
+            BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.border,
         ),
       ),
+
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Text(
             appointment.menteeName,
@@ -135,8 +337,12 @@ class RequestItem extends StatelessWidget {
                 Icons.calendar_today_outlined,
                 size: 16,
               ),
+
               const SizedBox(width: 6),
-              Text(appointment.date),
+
+              Text(
+                appointment.date,
+              ),
 
               const SizedBox(width: 16),
 
@@ -144,36 +350,69 @@ class RequestItem extends StatelessWidget {
                 Icons.access_time,
                 size: 16,
               ),
+
               const SizedBox(width: 6),
-              Text(appointment.time),
+
+              Text(
+                appointment.time,
+              ),
             ],
           ),
 
           const SizedBox(height: 16),
 
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _updateStatus("rejected"),
-                  child: const Text("Reject"),
-                ),
-              ),
+          if (_isLoading)
+            const Center(
+              child:
+                  CircularProgressIndicator(),
+            )
+          else
+            Row(
+              children: [
+                // =================================================
+                // REJECT
+                // =================================================
 
-              const SizedBox(width: 10),
-
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _updateStatus("accepted"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.mintGreen,
-                    foregroundColor: Colors.white,
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed:
+                        _rejectAppointment,
+                    style:
+                        OutlinedButton.styleFrom(
+                      foregroundColor:
+                          Colors.red,
+                    ),
+                    child: const Text(
+                      "Reject",
+                    ),
                   ),
-                  child: const Text("Accept"),
                 ),
-              ),
-            ],
-          ),
+
+                const SizedBox(width: 10),
+
+                // =================================================
+                // ACCEPT
+                // =================================================
+
+                Expanded(
+                  child:
+                      ElevatedButton(
+                    onPressed:
+                        _acceptAppointment,
+                    style:
+                        ElevatedButton.styleFrom(
+                      backgroundColor:
+                          AppColors.mintGreen,
+                      foregroundColor:
+                          Colors.white,
+                    ),
+                    child: const Text(
+                      "Accept",
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

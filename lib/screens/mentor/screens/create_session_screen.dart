@@ -114,8 +114,7 @@ class _CreateSessionScreenState
 
   Future<void> pickDocument() async {
     final result =
-        await FilePicker.platform
-            .pickFiles(
+        await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: [
         'doc',

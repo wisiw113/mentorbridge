@@ -9,7 +9,8 @@ import 'package:flutter_application_1/widgets/appointment/appointment_empty_stat
 import 'package:flutter_application_1/widgets/appointment/appointment_request_card.dart';
 import 'package:flutter_application_1/widgets/appointment/appointment_status_filter.dart';
 import 'package:flutter_application_1/widgets/appointment/reject_reason_popup.dart';
-import 'package:flutter_application_1/widgets/appointment/appointment_detail_popup.dart';
+
+import 'package:flutter_application_1/screens/common/appointment_detail_screen.dart';
 
 class RequestsTab extends StatefulWidget {
   const RequestsTab({
@@ -29,22 +30,20 @@ class _RequestsTabState
   String selectedStatus = "all";
 
   // =========================================================
-  // SHOW APPOINTMENT DETAIL
+  // OPEN APPOINTMENT DETAIL
   // =========================================================
 
-  void _showAppointmentDetail(
-    BuildContext context,
+  void _openAppointmentDetail(
     AppointmentModel appointment,
   ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return AppointmentDetailPopup(
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            AppointmentDetailScreen(
           appointment: appointment,
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -56,6 +55,10 @@ class _RequestsTabState
   Widget build(BuildContext context) {
     final user =
         FirebaseAuth.instance.currentUser;
+
+    // =======================================================
+    // CHƯA ĐĂNG NHẬP
+    // =======================================================
 
     if (user == null) {
       return Container(
@@ -71,11 +74,15 @@ class _RequestsTabState
       );
     }
 
+    // =======================================================
+    // REQUEST LIST
+    // =======================================================
+
     return ColoredBox(
       color: AppColors.lightMint,
       child: StreamBuilder<
           List<AppointmentModel>>(
-        stream: _service.getMentorRequests(
+        stream: _service.getMentorAppointments(
           user.uid,
         ),
         builder: (
@@ -89,7 +96,8 @@ class _RequestsTabState
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(
+              child:
+                  CircularProgressIndicator(
                 color: AppColors.mintGreen,
               ),
             );
@@ -115,6 +123,10 @@ class _RequestsTabState
               ),
             );
           }
+
+          // ===================================================
+          // APPOINTMENTS
+          // ===================================================
 
           final appointments =
               snapshot.data ?? [];
@@ -150,7 +162,7 @@ class _RequestsTabState
               const SizedBox(height: 20),
 
               // =================================================
-              // LIST
+              // APPOINTMENT LIST
               // =================================================
 
               Expanded(
@@ -167,15 +179,11 @@ class _RequestsTabState
                                 filteredAppointments
                                     .length,
                             separatorBuilder:
-                                (
-                              _,
-                              __,
-                            ) =>
+                                (_, __) =>
                                     const SizedBox(
                               height: 12,
                             ),
-                            itemBuilder:
-                                (
+                            itemBuilder: (
                               context,
                               index,
                             ) {
@@ -184,12 +192,13 @@ class _RequestsTabState
                                       index];
 
                               final status =
-                                  appointment.status
+                                  appointment
+                                      .status
                                       .toLowerCase();
 
-                              // =================================
-                              // CAN COMPLETE
-                              // =================================
+                              // =================================================
+                              // CHECK CAN COMPLETE
+                              // =================================================
 
                               final canComplete =
                                   status ==
@@ -198,40 +207,58 @@ class _RequestsTabState
                                         appointment,
                                       );
 
+                              // =================================================
+                              // APPOINTMENT CARD
+                              // =================================================
+
                               return InkWell(
                                 borderRadius:
-                                    BorderRadius.circular(
+                                    BorderRadius
+                                        .circular(
                                   16,
                                 ),
+
+                                // =================================================
+                                // BẤM CARD
+                                // MỞ APPOINTMENT DETAIL
+                                // =================================================
+
                                 onTap: () {
-                                  _showAppointmentDetail(
-                                    context,
+                                  _openAppointmentDetail(
                                     appointment,
                                   );
                                 },
+
                                 child:
                                     AppointmentRequestCard(
                                   appointment:
                                       appointment,
 
-                                  // ===============================
+                                  // =================================================
+                                  // KHÔNG CÒN onMenteeTap
+                                  //
+                                  // AppointmentRequestCard
+                                  // tự mở MenteeProfileScreen
+                                  // khi bấm avatar.
+                                  // =================================================
+
+                                  // =================================================
                                   // ACCEPT
-                                  // ===============================
+                                  // =================================================
 
                                   onAccept:
                                       status ==
                                               "pending"
                                           ? () =>
                                               _updateStatus(
-                                                appointment
-                                                    .id,
+                                                appointment,
                                                 "accepted",
                                               )
                                           : null,
 
-                                  // ===============================
+                                  // =================================================
                                   // REJECT
-                                  // ===============================
+                                  // =================================================
 
                                   onReject:
                                       status ==
@@ -243,19 +270,22 @@ class _RequestsTabState
                                               )
                                           : null,
 
-                                  // ===============================
-                                  // COMPLETE
-                                  // ===============================
+                                  // =================================================
+                                  // CAN COMPLETE
+                                  // =================================================
 
                                   canComplete:
                                       canComplete,
+
+                                  // =================================================
+                                  // COMPLETE
+                                  // =================================================
 
                                   onComplete:
                                       canComplete
                                           ? () =>
                                               _updateStatus(
-                                                appointment
-                                                    .id,
+                                                appointment,
                                                 "completed",
                                               )
                                           : null,
@@ -295,16 +325,47 @@ class _RequestsTabState
       },
     );
 
+    // =======================================================
+    // USER CANCEL REJECT
+    // =======================================================
+
     if (reason == null ||
         reason.trim().isEmpty) {
       return;
     }
 
-    await _updateStatus(
-      appointmentId,
-      "rejected",
-      reason: reason.trim(),
-    );
+    // =======================================================
+    // REJECT
+    // =======================================================
+
+    try {
+      await _service.rejectAppointment(
+        appointmentId: appointmentId,
+        reason: reason.trim(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Đã từ chối yêu cầu.",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            "Có lỗi xảy ra: $e",
+          ),
+        ),
+      );
+    }
   }
 
   // =========================================================
@@ -313,26 +374,34 @@ class _RequestsTabState
 
   List<AppointmentModel>
       _filterAppointments(
-    List<AppointmentModel> appointments,
+    List<AppointmentModel>
+        appointments,
   ) {
+    // =======================================================
+    // SHOW ALL
+    // =======================================================
+
     if (selectedStatus == "all") {
       return appointments;
     }
+
+    // =======================================================
+    // FILTER BY STATUS
+    // =======================================================
 
     return appointments
         .where(
           (appointment) =>
               appointment.status
                   .toLowerCase() ==
-              selectedStatus.toLowerCase(),
+              selectedStatus
+                  .toLowerCase(),
         )
         .toList();
   }
 
   // =========================================================
   // CAN COMPLETE
-  //
-  // Chỉ Complete khi Appointment đã kết thúc.
   // =========================================================
 
   bool _canComplete(
@@ -346,22 +415,51 @@ class _RequestsTabState
   // =========================================================
   // UPDATE STATUS
   // =========================================================
+  //
+  // AppointmentService hiện tại:
+  //
+  // accepted  -> acceptAppointment()
+  // completed -> completeAppointment()
+  //
+  // rejected được xử lý riêng trong
+  // _rejectAppointment().
+  // =========================================================
 
   Future<void> _updateStatus(
-    String appointmentId,
-    String status, {
-    String? reason,
-  }) async {
+    AppointmentModel appointment,
+    String status,
+  ) async {
     try {
-      await _service.updateStatus(
-        appointmentId,
-        status,
-        rejectReason: reason,
-      );
+      // =======================================================
+      // ACCEPT
+      // =======================================================
 
-      if (!mounted) {
-        return;
+      switch (status) {
+        case "accepted":
+          await _service.acceptAppointment(
+            appointment.id,
+          );
+          break;
+
+        // =====================================================
+        // COMPLETE
+        // =====================================================
+
+        case "completed":
+          await _service.completeAppointment(
+            appointment,
+          );
+          break;
+
+        // =====================================================
+        // OTHER STATUS
+        // =====================================================
+
+        default:
+          return;
       }
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
@@ -372,9 +470,7 @@ class _RequestsTabState
         ),
       );
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context)
           .showSnackBar(

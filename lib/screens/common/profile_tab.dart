@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/theme/app_colors.dart';
+import 'package:flutter_application_1/core/theme/app_colors.dart';
+import 'package:flutter_application_1/services/user_profile_service.dart';
+
 import '../../../widgets/common/confirm_dialog.dart';
 import '../../../widgets/common/edit_profile_popup.dart';
 import '../../../widgets/profile_tab/profile_action_buttons.dart';
@@ -23,7 +25,26 @@ class ProfileTab extends StatefulWidget {
 }
 
 class _ProfileTabState extends State<ProfileTab> {
-  final uid = FirebaseAuth.instance.currentUser!.uid;
+  // =========================================================
+  // SERVICES
+  // =========================================================
+
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
+
+  final UserProfileService _profileService =
+      UserProfileService();
+
+  // =========================================================
+  // USER
+  // =========================================================
+
+  String get uid =>
+      FirebaseAuth.instance.currentUser!.uid;
+
+  // =========================================================
+  // PROFILE DATA
+  // =========================================================
 
   String name = "";
   String role = "";
@@ -38,8 +59,16 @@ class _ProfileTabState extends State<ProfileTab> {
   String studentYear = "";
   String bio = "";
 
+  // =========================================================
+  // STATE
+  // =========================================================
+
   bool isUploading = false;
   bool isLoading = true;
+
+  // =========================================================
+  // INIT
+  // =========================================================
 
   @override
   void initState() {
@@ -47,9 +76,13 @@ class _ProfileTabState extends State<ProfileTab> {
     loadUser();
   }
 
+  // =========================================================
+  // LOAD USER
+  // =========================================================
+
   Future<void> loadUser() async {
     try {
-      final doc = await FirebaseFirestore.instance
+      final doc = await _firestore
           .collection('users')
           .doc(uid)
           .get();
@@ -69,21 +102,39 @@ class _ProfileTabState extends State<ProfileTab> {
       if (!mounted) return;
 
       setState(() {
-        name = data['name']?.toString() ?? "";
-        role = data['role']?.toString() ?? "";
-        email = FirebaseAuth.instance.currentUser?.email ?? "";
-        gender = data['gender']?.toString() ?? "";
-        photoURL = data['photoURL']?.toString();
+        name =
+            data['name']?.toString() ?? "";
 
-        birthYear = data['birthYear'] is int
-            ? data['birthYear']
-            : int.tryParse(
-                data['birthYear']?.toString() ?? "",
-              );
+        role =
+            data['role']?.toString() ?? "";
 
-        major = data['major']?.toString() ?? "";
-        studentYear = data['studentYear']?.toString() ?? "";
-        bio = data['bio']?.toString() ?? "";
+        email =
+            FirebaseAuth.instance.currentUser?.email ??
+                "";
+
+        gender =
+            data['gender']?.toString() ?? "";
+
+        photoURL =
+            data['photoURL']?.toString();
+
+        birthYear =
+            data['birthYear'] is int
+                ? data['birthYear'] as int
+                : int.tryParse(
+                    data['birthYear']
+                            ?.toString() ??
+                        "",
+                  );
+
+        major =
+            data['major']?.toString() ?? "";
+
+        studentYear =
+            data['studentYear']?.toString() ?? "";
+
+        bio =
+            data['bio']?.toString() ?? "";
 
         isLoading = false;
       });
@@ -104,6 +155,10 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
+  // =========================================================
+  // UPLOAD TO CLOUDINARY
+  // =========================================================
+
   Future<String?> uploadToCloudinary(
     Uint8List bytes,
   ) async {
@@ -120,7 +175,8 @@ class _ProfileTabState extends State<ProfileTab> {
       url,
     );
 
-    request.fields['upload_preset'] = uploadPreset;
+    request.fields['upload_preset'] =
+        uploadPreset;
 
     request.files.add(
       http.MultipartFile.fromBytes(
@@ -130,12 +186,14 @@ class _ProfileTabState extends State<ProfileTab> {
       ),
     );
 
-    final response = await request.send();
+    final response =
+        await request.send();
 
     final responseBody =
         await response.stream.bytesToString();
 
-    final data = json.decode(responseBody);
+    final data =
+        json.decode(responseBody);
 
     if (response.statusCode == 200 &&
         data["secure_url"] != null) {
@@ -145,18 +203,29 @@ class _ProfileTabState extends State<ProfileTab> {
     return null;
   }
 
+  // =========================================================
+  // PICK + UPLOAD IMAGE
+  // =========================================================
+
   Future<void> pickAndUploadImage() async {
     final picker = ImagePicker();
 
-    final picked = await picker.pickImage(
+    final picked =
+        await picker.pickImage(
       source: ImageSource.gallery,
     );
 
     if (picked == null) return;
 
-    final bytes = await picked.readAsBytes();
+    final bytes =
+        await picked.readAsBytes();
 
-    final confirm = await showDialog<bool>(
+    // =======================================================
+    // PREVIEW + CONFIRM
+    // =======================================================
+
+    final confirm =
+        await showDialog<bool>(
       context: context,
       builder: (_) {
         return AlertDialog(
@@ -170,13 +239,19 @@ class _ProfileTabState extends State<ProfileTab> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context, false);
+                Navigator.pop(
+                  context,
+                  false,
+                );
               },
               child: const Text("Hủy"),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context, true);
+                Navigator.pop(
+                  context,
+                  true,
+                );
               },
               child: const Text("Xác nhận"),
             ),
@@ -187,30 +262,52 @@ class _ProfileTabState extends State<ProfileTab> {
 
     if (confirm != true) return;
 
+    if (!mounted) return;
+
     setState(() {
       isUploading = true;
     });
 
     try {
-      final url = await uploadToCloudinary(bytes);
+      // =====================================================
+      // 1. UPLOAD CLOUDINARY
+      // =====================================================
 
-      if (url != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .set(
-          {
-            'photoURL': url,
-          },
-          SetOptions(merge: true),
+      final url =
+          await uploadToCloudinary(bytes);
+
+      if (url == null) {
+        throw Exception(
+          "Không nhận được URL ảnh từ Cloudinary.",
         );
-
-        if (!mounted) return;
-
-        setState(() {
-          photoURL = url;
-        });
       }
+
+      // =====================================================
+      // 2. UPDATE PHOTO URL
+      // =====================================================
+      //
+      // ProfileTab chỉ gọi service.
+      // Không tự xử lý dữ liệu liên quan.
+      //
+
+      await _profileService.updatePhotoURL(
+        uid: uid,
+        photoURL: url,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        photoURL = url;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Cập nhật ảnh đại diện thành công",
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
 
@@ -230,15 +327,25 @@ class _ProfileTabState extends State<ProfileTab> {
     });
   }
 
+  // =========================================================
+  // EDIT PROFILE
+  // =========================================================
+
   void editProfileDialog() {
     showDialog(
       context: context,
       builder: (_) {
         return EditProfilePopup(
           name: name,
-          birthYear: birthYear?.toString() ?? "",
+          birthYear:
+              birthYear?.toString() ?? "",
           gender: gender,
           bio: bio,
+
+          // =================================================
+          // SAVE
+          // =================================================
+
           onSave: (
             newName,
             newBirthYear,
@@ -246,26 +353,41 @@ class _ProfileTabState extends State<ProfileTab> {
             newBio,
           ) async {
             try {
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(uid)
-                  .set(
-                {
-                  'name': newName,
-                  'birthYear': int.tryParse(
-                    newBirthYear,
-                  ),
-                  'gender': newGender,
-                  'bio': newBio,
-                },
-                SetOptions(merge: true),
+              // =================================================
+              // UPDATE PROFILE + SYNC DATA
+              // =================================================
+              //
+              // Tất cả logic đồng bộ:
+              //
+              // users
+              // appointments
+              // sessions
+              // session_ratings
+              //
+              // nằm trong UserProfileService.
+              //
+
+              await _profileService.updateProfile(
+                uid: uid,
+                name: newName,
+                birthYear:
+                    int.tryParse(
+                  newBirthYear,
+                ),
+                gender: newGender,
+                bio: newBio,
               );
+
+              // =================================================
+              // LOAD PROFILE LẠI
+              // =================================================
 
               await loadUser();
 
               if (!mounted) return;
 
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(
                 const SnackBar(
                   content: Text(
                     "Cập nhật thông tin thành công",
@@ -275,7 +397,8 @@ class _ProfileTabState extends State<ProfileTab> {
             } catch (e) {
               if (!mounted) return;
 
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(
                 SnackBar(
                   content: Text(
                     "Cập nhật thất bại: $e",
@@ -289,11 +412,17 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
+  // =========================================================
+  // LOGOUT
+  // =========================================================
+
   Future<void> logout() async {
-    final confirm = await showConfirmDialog(
+    final confirm =
+        await showConfirmDialog(
       context,
       title: "Đăng xuất",
-      content: "Bạn có chắc chắn muốn đăng xuất không?",
+      content:
+          "Bạn có chắc chắn muốn đăng xuất không?",
     );
 
     if (!confirm) return;
@@ -308,93 +437,161 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
+  // =========================================================
+  // BUILD
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child:
+              CircularProgressIndicator(),
         ),
       );
     }
 
     return Scaffold(
-  backgroundColor: AppColors.softMint,
-  body: SafeArea(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.only(
-        bottom: 110,
+      backgroundColor:
+          AppColors.softMint,
+
+      body: SafeArea(
+        child:
+            SingleChildScrollView(
+          padding:
+              const EdgeInsets.only(
+            bottom: 110,
+          ),
+
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 25,
+              ),
+
+              // =================================================
+              // AVATAR
+              // =================================================
+
+              ProfileAvatar(
+                name: name,
+                photoURL: photoURL,
+                isUploading:
+                    isUploading,
+                onCameraTap:
+                    pickAndUploadImage,
+              ),
+
+              const SizedBox(
+                height: 12,
+              ),
+
+              // =================================================
+              // HEADER
+              // =================================================
+
+              ProfileHeader(
+                name: name,
+                email: email,
+              ),
+
+              const SizedBox(
+                height: 25,
+              ),
+
+              // =================================================
+              // STATS
+              // =================================================
+
+              ProfileStats(
+                role: role,
+                birthYear:
+                    birthYear,
+                gender:
+                    gender,
+              ),
+
+              const SizedBox(
+                height: 25,
+              ),
+
+              // =================================================
+              // PROFILE INFO
+              // =================================================
+
+              _buildProfileInfo(),
+
+              const SizedBox(
+                height: 25,
+              ),
+
+              // =================================================
+              // ACTION BUTTONS
+              // =================================================
+
+              ProfileActionButtons(
+                onEdit:
+                    editProfileDialog,
+                onLogout:
+                    logout,
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Column(
-        children: [
-          const SizedBox(height: 25),
-
-          ProfileAvatar(
-            name: name,
-            photoURL: photoURL,
-            isUploading: isUploading,
-            onCameraTap: pickAndUploadImage,
-          ),
-
-          const SizedBox(height: 12),
-
-          ProfileHeader(
-            name: name,
-            email: email,
-          ),
-
-          const SizedBox(height: 25),
-
-          ProfileStats(
-            role: role,
-            birthYear: birthYear,
-            gender: gender,
-          ),
-
-          const SizedBox(height: 25),
-
-          _buildProfileInfo(),
-
-          const SizedBox(height: 25),
-
-          ProfileActionButtons(
-            onEdit: editProfileDialog,
-            onLogout: logout,
-          ),
-        ],
-      ),
-    ),
-  ),
-);
+    );
   }
+
+  // =========================================================
+  // PROFILE INFORMATION
+  // =========================================================
 
   Widget _buildProfileInfo() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(
+
+      margin:
+          const EdgeInsets.symmetric(
         horizontal: 20,
       ),
-      padding: const EdgeInsets.all(18),
+
+      padding:
+          const EdgeInsets.all(18),
+
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+        color:
+            AppColors.white,
+
+        borderRadius:
+            BorderRadius.circular(18),
+
         border: Border.all(
-          color: AppColors.border,
+          color:
+              AppColors.border,
         ),
       ),
+
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+
         children: [
           const Text(
             "Thông tin cá nhân",
+
             style: TextStyle(
               fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: AppColors.deepGreen,
+              fontWeight:
+                  FontWeight.bold,
+              color:
+                  AppColors.deepGreen,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(
+            height: 16,
+          ),
 
           _infoRow(
             Icons.school_outlined,
@@ -418,47 +615,69 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
+  // =========================================================
+  // INFO ROW
+  // =========================================================
+
   Widget _infoRow(
     IconData icon,
     String title,
     String value,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(
+      padding:
+          const EdgeInsets.only(
         bottom: 14,
       ),
+
       child: Row(
         crossAxisAlignment:
             CrossAxisAlignment.start,
+
         children: [
           Icon(
             icon,
             size: 20,
-            color: AppColors.deepGreen,
+            color:
+                AppColors.deepGreen,
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(
+            width: 12,
+          ),
 
           Expanded(
             child: Column(
               crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  CrossAxisAlignment
+                      .start,
+
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+
+                  style:
+                      const TextStyle(
                     fontSize: 12,
-                    color: AppColors.gray,
+                    color:
+                        AppColors.gray,
                   ),
                 ),
 
-                const SizedBox(height: 3),
+                const SizedBox(
+                  height: 3,
+                ),
 
                 Text(
-                  value.isEmpty ? "-" : value,
-                  style: const TextStyle(
+                  value.isEmpty
+                      ? "-"
+                      : value,
+
+                  style:
+                      const TextStyle(
                     fontSize: 14,
-                    color: AppColors.darkGray,
+                    color:
+                        AppColors.darkGray,
                   ),
                 ),
               ],
@@ -469,4 +688,3 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 }
-   

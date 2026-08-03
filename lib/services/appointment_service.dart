@@ -3,248 +3,427 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/appointment_model.dart';
 
 class AppointmentService {
-final FirebaseFirestore _firestore =
-FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
-// =========================================================
-// CREATE APPOINTMENT
-// =========================================================
+  // =========================================================
+  // CREATE APPOINTMENT
+  // =========================================================
 
-Future<void> createAppointment(
-AppointmentModel model,
-) async {
-await _firestore
-.collection('appointments')
-.add(
-model.toMap(),
-);
-}
-
-// =========================================================
-// BOOK APPOINTMENT
-// =========================================================
-
-Future<void> bookAppointment(
-AppointmentModel model,
-) async {
-// Không cho phép đặt lịch trong quá khứ
-if (model.startAt.isBefore(DateTime.now())) {
-throw Exception(
-"Không thể đặt lịch trong quá khứ.",
-);
-}
-
-
-// =======================================================
-// CHECK MENTOR'S SCHEDULE
-// =======================================================
-
-final mentorAppointments =
+  Future<void> createAppointment(
+    AppointmentModel appointment,
+  ) async {
     await _firestore
         .collection('appointments')
-        .where(
-          'mentorId',
-          isEqualTo: model.mentorId,
-        )
-        .where(
-          'status',
-          whereIn: [
-            'pending',
-            'accepted',
-          ],
-        )
-        .get();
+        .add(
+          appointment.toMap(),
+        );
+  }
 
-for (final doc
-    in mentorAppointments.docs) {
-  final appointment =
-      AppointmentModel.fromMap(
-    doc.id,
-    doc.data(),
-  );
+  // =========================================================
+  // BOOK APPOINTMENT
+  // =========================================================
 
-  final isOverlapping =
-      _isTimeOverlapping(
-    model.startAt,
-    model.endAt,
-    appointment.startAt,
-    appointment.endAt,
-  );
+  Future<void> bookAppointment(
+    AppointmentModel appointment,
+  ) async {
+    final now = DateTime.now();
 
-  if (isOverlapping) {
-    throw Exception(
-      "Mentor đã có lịch trong khoảng thời gian này.",
+    // Không cho đặt lịch trong quá khứ
+    if (appointment.startAt.isBefore(now)) {
+      throw Exception(
+        'Không thể đặt lịch trong quá khứ.',
+      );
+    }
+
+    // =======================================================
+    // CHECK MENTOR SCHEDULE
+    // =======================================================
+
+    final mentorAppointments =
+        await _firestore
+            .collection('appointments')
+            .where(
+              'mentorId',
+              isEqualTo:
+                  appointment.mentorId,
+            )
+            .where(
+              'status',
+              whereIn: [
+                'pending',
+                'accepted',
+              ],
+            )
+            .get();
+
+    for (final doc
+        in mentorAppointments.docs) {
+      final existing =
+          AppointmentModel.fromMap(
+        doc.id,
+        doc.data(),
+      );
+
+      if (_isTimeOverlapping(
+        appointment.startAt,
+        appointment.endAt,
+        existing.startAt,
+        existing.endAt,
+      )) {
+        throw Exception(
+          'Mentor đã có lịch hẹn trong khoảng thời gian này.',
+        );
+      }
+    }
+
+    // =======================================================
+    // CHECK MENTEE SCHEDULE
+    // =======================================================
+
+    final menteeAppointments =
+        await _firestore
+            .collection('appointments')
+            .where(
+              'menteeId',
+              isEqualTo:
+                  appointment.menteeId,
+            )
+            .where(
+              'status',
+              whereIn: [
+                'pending',
+                'accepted',
+              ],
+            )
+            .get();
+
+    for (final doc
+        in menteeAppointments.docs) {
+      final existing =
+          AppointmentModel.fromMap(
+        doc.id,
+        doc.data(),
+      );
+
+      if (_isTimeOverlapping(
+        appointment.startAt,
+        appointment.endAt,
+        existing.startAt,
+        existing.endAt,
+      )) {
+        throw Exception(
+          'Bạn đã có một lịch hẹn khác trong khoảng thời gian này.',
+        );
+      }
+    }
+
+    // =======================================================
+    // CREATE
+    // =======================================================
+
+    await createAppointment(
+      appointment,
     );
   }
-}
 
-// =======================================================
-// CHECK MENTEE'S SCHEDULE
-// =======================================================
+  // =========================================================
+  // CHECK OVERLAP
+  // =========================================================
 
-final menteeAppointments =
-    await _firestore
+  bool _isTimeOverlapping(
+    DateTime start1,
+    DateTime end1,
+    DateTime start2,
+    DateTime end2,
+  ) {
+    return start1.isBefore(end2) &&
+        end1.isAfter(start2);
+  }
+
+  // =========================================================
+  // GET APPOINTMENT BY ID
+  // =========================================================
+
+  Future<AppointmentModel?> getAppointment(
+    String appointmentId,
+  ) async {
+    final doc = await _firestore
+        .collection('appointments')
+        .doc(appointmentId)
+        .get();
+
+    if (!doc.exists) {
+      return null;
+    }
+
+    final data = doc.data();
+
+    if (data == null) {
+      return null;
+    }
+
+    return AppointmentModel.fromMap(
+      doc.id,
+      data,
+    );
+  }
+
+  // =========================================================
+  // GET MENTEE APPOINTMENTS
+  // =========================================================
+
+  Stream<List<AppointmentModel>>
+      getMenteeAppointments(
+    String menteeId,
+  ) {
+    return _firestore
         .collection('appointments')
         .where(
           'menteeId',
-          isEqualTo: model.menteeId,
+          isEqualTo: menteeId,
         )
-        .where(
-          'status',
-          whereIn: [
-            'pending',
-            'accepted',
-          ],
-        )
-        .get();
+        .snapshots()
+        .map(
+      (snapshot) {
+        final appointments =
+            snapshot.docs
+                .map(
+                  (doc) =>
+                      AppointmentModel
+                          .fromMap(
+                    doc.id,
+                    doc.data(),
+                  ),
+                )
+                .toList();
 
-for (final doc
-    in menteeAppointments.docs) {
-  final appointment =
-      AppointmentModel.fromMap(
-    doc.id,
-    doc.data(),
-  );
+        _sortAppointments(
+          appointments,
+        );
 
-  final isOverlapping =
-      _isTimeOverlapping(
-    model.startAt,
-    model.endAt,
-    appointment.startAt,
-    appointment.endAt,
-  );
-
-  if (isOverlapping) {
-    throw Exception(
-      "Bạn đã có một lịch hẹn khác trong khoảng thời gian này.",
+        return appointments;
+      },
     );
   }
-}
 
-// =======================================================
-// CREATE
-// =======================================================
+  // =========================================================
+  // GET MENTOR APPOINTMENTS
+  // =========================================================
 
-await createAppointment(model);
+  Stream<List<AppointmentModel>>
+      getMentorAppointments(
+    String mentorId,
+  ) {
+    return _firestore
+        .collection('appointments')
+        .where(
+          'mentorId',
+          isEqualTo: mentorId,
+        )
+        .snapshots()
+        .map(
+      (snapshot) {
+        final appointments =
+            snapshot.docs
+                .map(
+                  (doc) =>
+                      AppointmentModel
+                          .fromMap(
+                    doc.id,
+                    doc.data(),
+                  ),
+                )
+                .toList();
 
+        _sortAppointments(
+          appointments,
+        );
 
-}
+        return appointments;
+      },
+    );
+  }
 
-// =========================================================
-// CHECK TIME OVERLAP
-// =========================================================
+  // =========================================================
+  // SORT APPOINTMENTS
+  // =========================================================
 
-bool _isTimeOverlapping(
-DateTime start1,
-DateTime end1,
-DateTime start2,
-DateTime end2,
-) {
-return start1.isBefore(end2) &&
-end1.isAfter(start2);
-}
+  void _sortAppointments(
+    List<AppointmentModel>
+        appointments,
+  ) {
+    appointments.sort(
+      (a, b) =>
+          a.startAt.compareTo(
+        b.startAt,
+      ),
+    );
+  }
 
-// =========================================================
-// GET MENTEE APPOINTMENTS
-// =========================================================
+  // =========================================================
+  // ACCEPT APPOINTMENT
+  // =========================================================
 
-Stream<List<AppointmentModel>>
-getMenteeAppointments(
-String menteeId,
-) {
-return _firestore
-.collection('appointments')
-.where(
-'menteeId',
-isEqualTo: menteeId,
-)
-.snapshots()
-.map(
-(snapshot) {
-return snapshot.docs
-.map(
-(doc) =>
-AppointmentModel.fromMap(
-doc.id,
-doc.data(),
-),
-)
-.toList();
-},
-);
-}
+  Future<void> acceptAppointment(
+    String appointmentId,
+  ) async {
+    await _firestore
+        .collection('appointments')
+        .doc(appointmentId)
+        .update({
+      'status': 'accepted',
+      'rejectReason': null,
+    });
+  }
 
-// =========================================================
-// GET MENTOR REQUESTS
-// =========================================================
+  // =========================================================
+  // REJECT APPOINTMENT
+  // =========================================================
 
-Stream<List<AppointmentModel>>
-getMentorRequests(
-String mentorId,
-) {
-return _firestore
-.collection('appointments')
-.where(
-'mentorId',
-isEqualTo: mentorId,
-)
-.snapshots()
-.map(
-(snapshot) {
-return snapshot.docs
-.map(
-(doc) =>
-AppointmentModel.fromMap(
-doc.id,
-doc.data(),
-),
-)
-.toList();
-},
-);
-}
+  Future<void> rejectAppointment({
+    required String appointmentId,
+    required String reason,
+  }) async {
+    final trimmedReason =
+        reason.trim();
 
-// =========================================================
-// UPDATE APPOINTMENT STATUS
-// =========================================================
+    if (trimmedReason.isEmpty) {
+      throw Exception(
+        'Vui lòng nhập lý do từ chối.',
+      );
+    }
 
-Future<void> updateStatus(
-String id,
-String status, {
-String? rejectReason,
-}) async {
-final Map<String, dynamic> data = {
-'status': status,
-};
+    await _firestore
+        .collection('appointments')
+        .doc(appointmentId)
+        .update({
+      'status': 'rejected',
+      'rejectReason':
+          trimmedReason,
+    });
+  }
 
+  // =========================================================
+  // CANCEL APPOINTMENT
+  // =========================================================
 
-// Nếu appointment bị từ chối
-// và có lý do thì lưu lý do
-if (status == 'rejected' &&
-    rejectReason != null &&
-    rejectReason.trim().isNotEmpty) {
-  data['rejectReason'] =
-      rejectReason.trim();
-}
+  Future<void> cancelAppointment({
+    required String appointmentId,
+    required String reason,
+  }) async {
+    final trimmedReason =
+        reason.trim();
 
-await _firestore
-    .collection('appointments')
-    .doc(id)
-    .update(data);
+    if (trimmedReason.isEmpty) {
+      throw Exception(
+        'Vui lòng nhập lý do hủy lịch.',
+      );
+    }
 
+    await _firestore
+        .collection('appointments')
+        .doc(appointmentId)
+        .update({
+      'status': 'cancelled',
+      'cancelReason':
+          trimmedReason,
+    });
+  }
 
-}
+  // =========================================================
+  // COMPLETE APPOINTMENT
+  // =========================================================
+  //
+  // Chỉ cho phép Mentor Complete
+  // khi thời gian hiện tại >= startAt.
+  //
+  // Không được Complete trước giờ bắt đầu.
 
-// =========================================================
-// CANCEL APPOINTMENT
-// =========================================================
+  Future<void> completeAppointment(
+    AppointmentModel appointment,
+  ) async {
+    final now =
+        DateTime.now();
 
-Future<void> cancelAppointment(
-String id,
-) async {
-await _firestore
-.collection('appointments')
-.doc(id)
-.delete();
-}
-}
+    if (appointment.status !=
+        'accepted') {
+      throw Exception(
+        'Appointment chưa ở trạng thái accepted.',
+      );
+    }
+
+    if (now.isBefore(
+      appointment.startAt,
+    )) {
+      throw Exception(
+        'Chưa đến thời gian bắt đầu Appointment.',
+      );
+    }
+
+    await _firestore
+        .collection('appointments')
+        .doc(appointment.id)
+        .update({
+      'status': 'completed',
+    });
+  }
+
+  // =========================================================
+  // AUTO COMPLETE
+  // =========================================================
+  //
+  // Firestore không tự chạy code Flutter khi thời gian tới.
+  //
+  // Vì vậy màn hình sẽ gọi hàm này khi mở Appointment Detail.
+  //
+  // Nếu:
+  //
+  // accepted
+  // +
+  // now >= endAt
+  //
+  // => chuyển completed.
+
+  Future<AppointmentModel>
+      autoCompleteIfNeeded(
+    AppointmentModel appointment,
+  ) async {
+    final now =
+        DateTime.now();
+
+    if (appointment.status ==
+            'accepted' &&
+        !now.isBefore(
+          appointment.endAt,
+        )) {
+      await _firestore
+          .collection('appointments')
+          .doc(appointment.id)
+          .update({
+        'status': 'completed',
+      });
+
+      return appointment.copyWith(
+        status: 'completed',
+      );
+    }
+
+    return appointment;
+  }
+
+  // =========================================================
+  // UPDATE RATED
+  // =========================================================
+
+  Future<void> updateRated(
+    String appointmentId,
+  ) async {
+    await _firestore
+        .collection('appointments')
+        .doc(appointmentId)
+        .update({
+      'rated': true,
+    });
+  }
+}  
