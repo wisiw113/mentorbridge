@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../tabs/home_tab.dart';
@@ -6,12 +7,16 @@ import '../tabs/activity_tab.dart';
 
 // Shared
 import '../../common/profile_tab.dart';
+import '../../common/notification_screen.dart';
 
 // Custom bottom navbar
 import '../../../widgets/common/custom_bottom_navbar.dart';
 
 // Floating chat button
 import '../../../widgets/chat/floating_chat_button.dart';
+
+// Notification
+import '../../../widgets/notification/notification_bell.dart';
 
 // Chat
 import '../../../screens/chat/chat_list_screen.dart';
@@ -47,9 +52,21 @@ class _MentorScreenState
       context,
       MaterialPageRoute(
         builder: (_) => ChatListScreen(
-          // Mentor xem danh sách chat của Mentor
           isMentor: true,
         ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // OPEN NOTIFICATION SCREEN
+  // =========================================================
+
+  void _openNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NotificationScreen(),
       ),
     );
   }
@@ -74,6 +91,18 @@ class _MentorScreenState
           ),
 
           // ===================================================
+          // NOTIFICATION BELL
+          // ===================================================
+
+          Positioned(
+            right: 20,
+            bottom: 145,
+            child: NotificationBell(
+              onTap: _openNotifications,
+            ),
+          ),
+
+          // ===================================================
           // FLOATING CHAT BUTTON
           // ===================================================
 
@@ -82,8 +111,6 @@ class _MentorScreenState
             bottom: 90,
             child: FloatingChatButton(
               onPressed: _openChat,
-
-              // Sau này có thể truyền số tin nhắn chưa đọc
               unreadCount: 0,
             ),
           ),
@@ -109,4 +136,5 @@ class _MentorScreenState
       ),
     );
   }
-} 
+}
+

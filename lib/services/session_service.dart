@@ -2,10 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/session_model.dart';
 import '../models/session_participant_model.dart';
+import 'notification_service.dart';
 
 class SessionService {
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
+
+  final NotificationService _notificationService =
+      NotificationService();
 
   // =========================================================
   // CREATE SESSION
@@ -119,7 +123,7 @@ class SessionService {
     }
 
     // =======================================================
-    // CREATE
+    // CREATE SESSION
     // =======================================================
 
     final docRef =
@@ -128,6 +132,19 @@ class SessionService {
             .add(
               session.toMap(),
             );
+
+    // =======================================================
+    // NOTIFICATION - SESSION CREATED
+    // =======================================================
+
+    await _notificationService.createNotification(
+      userId: session.mentorId,
+      title: "Tạo Session thành công",
+      message:
+          'Session "${session.title}" đã được tạo thành công vào ngày ${session.date}, từ ${session.startTime} đến ${session.endTime}.',
+      type: "session_created",
+      relatedId: docRef.id,
+    );
 
     return docRef.id;
   }
@@ -429,7 +446,10 @@ class SessionService {
           data,
         );
 
-        // Cập nhật trạng thái dựa trên thời gian
+        // ===================================================
+        // UPDATE STATUS
+        // ===================================================
+
         final updatedStatus =
             _getExpectedStatus(
           currentSession,
@@ -446,7 +466,10 @@ class SessionService {
           );
         }
 
-        // Chỉ được Join khi Session còn open
+        // ===================================================
+        // CHECK STATUS
+        // ===================================================
+
         if (updatedStatus !=
             "open") {
           throw Exception(
@@ -462,12 +485,20 @@ class SessionService {
             (data["maxSlots"] ??
                     0) as int;
 
+        // ===================================================
+        // CHECK FULL
+        // ===================================================
+
         if (bookedSlots >=
             maxSlots) {
           throw Exception(
             "Session đã đầy.",
           );
         }
+
+        // ===================================================
+        // CHECK ĐÃ JOIN
+        // ===================================================
 
         final participantSnapshot =
             await transaction.get(
@@ -583,6 +614,23 @@ class SessionService {
         );
       },
     );
+
+    // =======================================================
+    // NOTIFICATION - MENTEE JOIN
+    // =======================================================
+
+    await _notificationService
+        .createNotification(
+      userId: session.mentorId,
+      title:
+          "Có Mentee tham gia Session",
+      message:
+          '$menteeName đã tham gia Session "${session.title}".',
+      type:
+          "session_joined",
+      relatedId:
+          session.id,
+    );
   }
 
   // =========================================================
@@ -604,6 +652,51 @@ class SessionService {
               "session_participants",
             )
             .doc(participantId);
+
+    // =======================================================
+    // GET SESSION
+    // =======================================================
+
+    final sessionDoc =
+        await sessionRef.get();
+
+    if (!sessionDoc.exists) {
+      throw Exception(
+        "Session không tồn tại.",
+      );
+    }
+
+    final session =
+        SessionModel.fromMap(
+      sessionDoc.id,
+      sessionDoc.data()!,
+    );
+
+    // =======================================================
+    // GET PARTICIPANT
+    // =======================================================
+
+    final participantDoc =
+        await participantRef.get();
+
+    if (!participantDoc.exists) {
+      throw Exception(
+        "Participant không tồn tại.",
+      );
+    }
+
+    final participantData =
+        participantDoc.data()!;
+
+    final menteeName =
+        participantData[
+                "menteeName"]
+            ?.toString() ??
+        "Một Mentee";
+
+    // =======================================================
+    // LEAVE TRANSACTION
+    // =======================================================
 
     await _firestore.runTransaction(
       (transaction) async {
@@ -670,113 +763,185 @@ class SessionService {
         );
       },
     );
+
+    // =======================================================
+    // NOTIFICATION - MENTEE LEAVE
+    // =======================================================
+
+    await _notificationService
+        .createNotification(
+      userId: session.mentorId,
+      title:
+          "Mentee đã rời Session",
+      message:
+          '$menteeName đã rời khỏi Session "${session.title}".',
+      type:
+          "session_left",
+      relatedId:
+          session.id,
+    );
   }
-// =========================================================
-// KICK PARTICIPANT
-// =========================================================
 
-Future<void> kickParticipant({
-  required String sessionId,
-  required String participantId,
-}) async {
-  final sessionRef =
-      _firestore
-          .collection("sessions")
-          .doc(sessionId);
+  // =========================================================
+  // KICK PARTICIPANT
+  // =========================================================
 
-  final participantRef =
-      _firestore
-          .collection("session_participants")
-          .doc(participantId);
+  Future<void> kickParticipant({
+    required String sessionId,
+    required String participantId,
+  }) async {
+    final sessionRef =
+        _firestore
+            .collection("sessions")
+            .doc(sessionId);
 
-  await _firestore.runTransaction(
-    (transaction) async {
-      // =====================================================
-      // GET SESSION
-      // =====================================================
+    final participantRef =
+        _firestore
+            .collection(
+              "session_participants",
+            )
+            .doc(participantId);
 
-      final sessionSnapshot =
-          await transaction.get(
-        sessionRef,
+    // =======================================================
+    // GET SESSION
+    // =======================================================
+
+    final sessionDoc =
+        await sessionRef.get();
+
+    if (!sessionDoc.exists) {
+      throw Exception(
+        "Session không tồn tại.",
       );
+    }
 
-      if (!sessionSnapshot.exists) {
-        throw Exception(
-          "Session không tồn tại.",
+    final session =
+        SessionModel.fromMap(
+      sessionDoc.id,
+      sessionDoc.data()!,
+    );
+
+    // =======================================================
+    // GET PARTICIPANT
+    // =======================================================
+
+    final participantDoc =
+        await participantRef.get();
+
+    if (!participantDoc.exists) {
+      throw Exception(
+        "Participant không tồn tại.",
+      );
+    }
+
+    final participantData =
+        participantDoc.data()!;
+
+    final menteeId =
+        participantData[
+                "menteeId"]
+            ?.toString() ??
+        "";
+
+    // =======================================================
+    // KICK TRANSACTION
+    // =======================================================
+
+    await _firestore.runTransaction(
+      (transaction) async {
+        final sessionSnapshot =
+            await transaction.get(
+          sessionRef,
         );
-      }
 
-      // =====================================================
-      // GET PARTICIPANT
-      // =====================================================
+        if (!sessionSnapshot.exists) {
+          throw Exception(
+            "Session không tồn tại.",
+          );
+        }
 
-      final participantSnapshot =
-          await transaction.get(
-        participantRef,
-      );
-
-      if (!participantSnapshot.exists) {
-        throw Exception(
-          "Participant không tồn tại.",
+        final participantSnapshot =
+            await transaction.get(
+          participantRef,
         );
-      }
 
-      // =====================================================
-      // CHECK SESSION STATUS
-      // =====================================================
+        if (!participantSnapshot
+            .exists) {
+          throw Exception(
+            "Participant không tồn tại.",
+          );
+        }
 
-      final data =
-          sessionSnapshot.data()!;
+        final data =
+            sessionSnapshot.data()!;
 
-      final currentSession =
-          SessionModel.fromMap(
-        sessionSnapshot.id,
-        data,
-      );
-
-      final currentStatus =
-          _getExpectedStatus(
-        currentSession,
-      );
-
-      // Chỉ được kick khi Session chưa bắt đầu
-      if (currentStatus != "open") {
-        throw Exception(
-          "Không thể kick mentee khi Session đã bắt đầu hoặc đã kết thúc.",
+        final currentSession =
+            SessionModel.fromMap(
+          sessionSnapshot.id,
+          data,
         );
-      }
 
-      // =====================================================
-      // GET BOOKED SLOTS
-      // =====================================================
+        final currentStatus =
+            _getExpectedStatus(
+          currentSession,
+        );
 
-      final int bookedSlots =
-          (data["bookedSlots"] ?? 0) as int;
+        // Chỉ được kick khi Session chưa bắt đầu
+        if (currentStatus !=
+            "open") {
+          throw Exception(
+            "Không thể kick mentee khi Session đã bắt đầu hoặc đã kết thúc.",
+          );
+        }
 
-      // =====================================================
-      // DECREASE BOOKED SLOTS
-      // =====================================================
+        final int bookedSlots =
+            (data["bookedSlots"] ??
+                    0) as int;
 
-      transaction.update(
-        sessionRef,
-        {
-          "bookedSlots":
-              bookedSlots > 0
-                  ? bookedSlots - 1
-                  : 0,
-        },
+        // ===================================================
+        // DECREASE BOOKED SLOTS
+        // ===================================================
+
+        transaction.update(
+          sessionRef,
+          {
+            "bookedSlots":
+                bookedSlots > 0
+                    ? bookedSlots - 1
+                    : 0,
+          },
+        );
+
+        // ===================================================
+        // REMOVE PARTICIPANT
+        // ===================================================
+
+        transaction.delete(
+          participantRef,
+        );
+      },
+    );
+
+    // =======================================================
+    // NOTIFICATION - MENTEE KICKED
+    // =======================================================
+
+    if (menteeId.isNotEmpty) {
+      await _notificationService
+          .createNotification(
+        userId: menteeId,
+        title:
+            "Bạn đã bị xóa khỏi Session",
+        message:
+            'Bạn đã bị Mentor xóa khỏi Session "${session.title}".',
+        type:
+            "session_kicked",
+        relatedId:
+            session.id,
       );
+    }
+  }
 
-      // =====================================================
-      // REMOVE PARTICIPANT
-      // =====================================================
-
-      transaction.delete(
-        participantRef,
-      );
-    },
-  );
-}
   // =========================================================
   // GET PARTICIPANTS
   // =========================================================
@@ -895,12 +1060,67 @@ Future<void> kickParticipant({
       );
     }
 
+    // =======================================================
+    // GET PARTICIPANTS
+    // =======================================================
+
+    final participantsSnapshot =
+        await _firestore
+            .collection(
+              "session_participants",
+            )
+            .where(
+              "sessionId",
+              isEqualTo: sessionId,
+            )
+            .where(
+              "status",
+              isEqualTo: "joined",
+            )
+            .get();
+
+    // =======================================================
+    // CANCEL SESSION
+    // =======================================================
+
     await _firestore
         .collection("sessions")
         .doc(sessionId)
         .update({
       "status": "cancelled",
     });
+
+    // =======================================================
+    // NOTIFICATION - SESSION CANCELLED
+    // =======================================================
+
+    for (final doc
+        in participantsSnapshot.docs) {
+      final data =
+          doc.data();
+
+      final menteeId =
+          data["menteeId"]
+              ?.toString() ??
+          "";
+
+      if (menteeId.isEmpty) {
+        continue;
+      }
+
+      await _notificationService
+          .createNotification(
+        userId: menteeId,
+        title:
+            "Session đã bị hủy",
+        message:
+            'Session "${session.title}" vào ngày ${session.date} từ ${session.startTime} đến ${session.endTime} đã bị Mentor hủy.',
+        type:
+            "session_cancelled",
+        relatedId:
+            session.id,
+      );
+    }
   }
 
   // =========================================================

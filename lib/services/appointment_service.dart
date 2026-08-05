@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/appointment_model.dart';
+import '../services/notification_service.dart';
 
 class AppointmentService {
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
+
+  final NotificationService _notificationService =
+      NotificationService();
 
   // =========================================================
   // CREATE APPOINTMENT
@@ -13,11 +17,25 @@ class AppointmentService {
   Future<void> createAppointment(
     AppointmentModel appointment,
   ) async {
-    await _firestore
+    final appointmentRef = await _firestore
         .collection('appointments')
         .add(
           appointment.toMap(),
         );
+
+    // =======================================================
+    // NOTIFICATION
+    // Mentee đặt lịch -> thông báo cho Mentor
+    // =======================================================
+
+    await _notificationService.createNotification(
+      userId: appointment.mentorId,
+      title: 'Yêu cầu đặt lịch mới',
+      message:
+          '${appointment.menteeName} đã gửi yêu cầu đặt lịch với bạn.',
+      type: 'appointment',
+      relatedId: appointmentRef.id,
+    );
   }
 
   // =========================================================
@@ -45,8 +63,7 @@ class AppointmentService {
             .collection('appointments')
             .where(
               'mentorId',
-              isEqualTo:
-                  appointment.mentorId,
+              isEqualTo: appointment.mentorId,
             )
             .where(
               'status',
@@ -86,8 +103,7 @@ class AppointmentService {
             .collection('appointments')
             .where(
               'menteeId',
-              isEqualTo:
-                  appointment.menteeId,
+              isEqualTo: appointment.menteeId,
             )
             .where(
               'status',
@@ -190,8 +206,7 @@ class AppointmentService {
             snapshot.docs
                 .map(
                   (doc) =>
-                      AppointmentModel
-                          .fromMap(
+                      AppointmentModel.fromMap(
                     doc.id,
                     doc.data(),
                   ),
@@ -228,8 +243,7 @@ class AppointmentService {
             snapshot.docs
                 .map(
                   (doc) =>
-                      AppointmentModel
-                          .fromMap(
+                      AppointmentModel.fromMap(
                     doc.id,
                     doc.data(),
                   ),
@@ -250,8 +264,7 @@ class AppointmentService {
   // =========================================================
 
   void _sortAppointments(
-    List<AppointmentModel>
-        appointments,
+    List<AppointmentModel> appointments,
   ) {
     appointments.sort(
       (a, b) =>
@@ -268,6 +281,22 @@ class AppointmentService {
   Future<void> acceptAppointment(
     String appointmentId,
   ) async {
+    // Lấy appointment trước để biết Mentee
+    final appointment =
+        await getAppointment(
+      appointmentId,
+    );
+
+    if (appointment == null) {
+      throw Exception(
+        'Không tìm thấy Appointment.',
+      );
+    }
+
+    // =======================================================
+    // UPDATE STATUS
+    // =======================================================
+
     await _firestore
         .collection('appointments')
         .doc(appointmentId)
@@ -275,6 +304,20 @@ class AppointmentService {
       'status': 'accepted',
       'rejectReason': null,
     });
+
+    // =======================================================
+    // NOTIFICATION
+    // Mentor Accept -> thông báo cho Mentee
+    // =======================================================
+
+    await _notificationService.createNotification(
+      userId: appointment.menteeId,
+      title: 'Appointment đã được chấp nhận',
+      message:
+          'Mentor ${appointment.mentorName} đã chấp nhận yêu cầu đặt lịch của bạn.',
+      type: 'appointment',
+      relatedId: appointmentId,
+    );
   }
 
   // =========================================================
@@ -294,14 +337,43 @@ class AppointmentService {
       );
     }
 
+    // Lấy appointment trước khi update
+    final appointment =
+        await getAppointment(
+      appointmentId,
+    );
+
+    if (appointment == null) {
+      throw Exception(
+        'Không tìm thấy Appointment.',
+      );
+    }
+
+    // =======================================================
+    // UPDATE STATUS
+    // =======================================================
+
     await _firestore
         .collection('appointments')
         .doc(appointmentId)
         .update({
       'status': 'rejected',
-      'rejectReason':
-          trimmedReason,
+      'rejectReason': trimmedReason,
     });
+
+    // =======================================================
+    // NOTIFICATION
+    // Mentor Reject -> thông báo cho Mentee
+    // =======================================================
+
+    await _notificationService.createNotification(
+      userId: appointment.menteeId,
+      title: 'Appointment đã bị từ chối',
+      message:
+          'Mentor ${appointment.mentorName} đã từ chối yêu cầu đặt lịch của bạn. Lý do: $trimmedReason',
+      type: 'appointment',
+      relatedId: appointmentId,
+    );
   }
 
   // =========================================================
@@ -321,24 +393,57 @@ class AppointmentService {
       );
     }
 
+    // Lấy appointment trước khi update
+    final appointment =
+        await getAppointment(
+      appointmentId,
+    );
+
+    if (appointment == null) {
+      throw Exception(
+        'Không tìm thấy Appointment.',
+      );
+    }
+
+    // =======================================================
+    // UPDATE STATUS
+    // =======================================================
+
     await _firestore
         .collection('appointments')
         .doc(appointmentId)
         .update({
       'status': 'cancelled',
-      'cancelReason':
-          trimmedReason,
+      'cancelReason': trimmedReason,
     });
+
+    // =======================================================
+    // NOTIFICATION
+    //
+    // Nếu Mentee hủy -> Mentor nhận
+    // Nếu Mentor hủy -> Mentee nhận
+    //
+    // Dựa vào currentUser để xác định người hủy.
+    // =======================================================
+
+    // Ở đây mặc định thông báo cho Mentor.
+    //
+    // Nếu flow hiện tại của bạn chỉ cho Mentee
+    // gọi cancelAppointment thì cách này là đúng.
+
+    await _notificationService.createNotification(
+      userId: appointment.mentorId,
+      title: 'Appointment đã bị hủy',
+      message:
+          '${appointment.menteeName} đã hủy Appointment. Lý do: $trimmedReason',
+      type: 'appointment',
+      relatedId: appointmentId,
+    );
   }
 
   // =========================================================
   // COMPLETE APPOINTMENT
   // =========================================================
-  //
-  // Chỉ cho phép Mentor Complete
-  // khi thời gian hiện tại >= startAt.
-  //
-  // Không được Complete trước giờ bắt đầu.
 
   Future<void> completeAppointment(
     AppointmentModel appointment,
@@ -361,29 +466,35 @@ class AppointmentService {
       );
     }
 
+    // =======================================================
+    // UPDATE STATUS
+    // =======================================================
+
     await _firestore
         .collection('appointments')
         .doc(appointment.id)
         .update({
       'status': 'completed',
     });
+
+    // =======================================================
+    // NOTIFICATION
+    // Mentor Complete -> thông báo cho Mentee
+    // =======================================================
+
+    await _notificationService.createNotification(
+      userId: appointment.menteeId,
+      title: 'Appointment đã hoàn thành',
+      message:
+          'Appointment với Mentor ${appointment.mentorName} đã được đánh dấu hoàn thành.',
+      type: 'appointment',
+      relatedId: appointment.id,
+    );
   }
 
   // =========================================================
   // AUTO COMPLETE
   // =========================================================
-  //
-  // Firestore không tự chạy code Flutter khi thời gian tới.
-  //
-  // Vì vậy màn hình sẽ gọi hàm này khi mở Appointment Detail.
-  //
-  // Nếu:
-  //
-  // accepted
-  // +
-  // now >= endAt
-  //
-  // => chuyển completed.
 
   Future<AppointmentModel>
       autoCompleteIfNeeded(
@@ -403,6 +514,20 @@ class AppointmentService {
           .update({
         'status': 'completed',
       });
+
+      // =====================================================
+      // NOTIFICATION
+      // Auto Complete -> thông báo cho Mentee
+      // =====================================================
+
+      await _notificationService.createNotification(
+        userId: appointment.menteeId,
+        title: 'Appointment đã hoàn thành',
+        message:
+            'Appointment với Mentor ${appointment.mentorName} đã hoàn thành.',
+        type: 'appointment',
+        relatedId: appointment.id,
+      );
 
       return appointment.copyWith(
         status: 'completed',
@@ -426,4 +551,4 @@ class AppointmentService {
       'rated': true,
     });
   }
-}  
+}

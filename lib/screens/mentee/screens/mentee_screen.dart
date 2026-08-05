@@ -8,7 +8,8 @@ import '../../common/profile_tab.dart';
 
 import '../../../widgets/common/custom_bottom_navbar.dart';
 import '../../../widgets/chat/floating_chat_button.dart';
-
+import '../../../widgets/notification/notification_bell.dart';
+import '../../common/notification_screen.dart';
 import '../../chat/chat_list_screen.dart';
 
 class MenteeScreen extends StatefulWidget {
@@ -47,6 +48,27 @@ class _MenteeScreenState
             child: IndexedStack(
               index: currentIndex,
               children: pages,
+            ),
+          ),
+
+          // ==========================================
+          // NOTIFICATION BELL
+          // ==========================================
+
+          Positioned(
+            right: 20,
+            bottom: 140,
+            child: NotificationBell(
+              onTap: () {
+                // TODO:
+                // Mở màn hình NotificationScreen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NotificationScreen(),
+                  ),
+                );
+              },
             ),
           ),
 
