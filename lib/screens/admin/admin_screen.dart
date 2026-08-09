@@ -6,7 +6,7 @@ import '../../widgets/admin/admin_logout_button.dart';
 
 import 'tabs/admin_dashboard_tab.dart';
 import 'tabs/admin_user_management_screen.dart';
-import 'tabs/admin_session_management_screen.dart';
+import 'tabs/admin_activity_management_screen.dart';
 import 'tabs/profile_tab.dart';
 
 class AdminScreen extends StatefulWidget {
@@ -22,14 +22,14 @@ class _AdminScreenState extends State<AdminScreen> {
   late final List<Widget> pages = const [
     AdminDashboardTab(),
     AdminUserManagementScreen(),
-    AdminSessionManagementScreen(),
+    AdminActivityManagementScreen(),
     ProfileTab(),
   ];
 
   final List<String> titles = const [
     'Admin Dashboard',
     'User Management',
-    'Session Management',
+    'Activity Management',
     'Profile',
   ];
 

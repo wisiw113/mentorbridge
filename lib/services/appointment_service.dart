@@ -225,7 +225,25 @@ class AppointmentService {
   // =========================================================
   // GET MENTOR APPOINTMENTS
   // =========================================================
+      Stream<List<AppointmentModel>> getAllAppointments() {
+        return _firestore
+            .collection('appointments')
+            .snapshots()
+            .map((snapshot) {
+              final appointments = snapshot.docs
+                  .map(
+                    (doc) => AppointmentModel.fromMap(
+                      doc.id,
+                      doc.data(),
+                    ),
+                  )
+                  .toList();
 
+              _sortAppointments(appointments);
+
+              return appointments;
+            });
+      }
   Stream<List<AppointmentModel>>
       getMentorAppointments(
     String mentorId,

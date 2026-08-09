@@ -2,59 +2,41 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-class AdminSessionFilter extends StatelessWidget {
-  final String selectedStatus;
-  final ValueChanged<String> onStatusChanged;
+class AdminAppointmentFilter extends StatelessWidget {
+  final String selectedFilter;
+  final ValueChanged<String> onChanged;
 
-  const AdminSessionFilter({
+  const AdminAppointmentFilter({
     super.key,
-    required this.selectedStatus,
-    required this.onStatusChanged,
+    required this.selectedFilter,
+    required this.onChanged,
   });
 
-  static const List<Map<String, String>> filters = [
-    {
-      'value': 'all',
-      'label': 'All',
-    },
-    {
-      'value': 'open',
-      'label': 'Open',
-    },
-    {
-      'value': 'full',
-      'label': 'Full',
-    },
-    {
-      'value': 'running',
-      'label': 'Running',
-    },
-    {
-      'value': 'completed',
-      'label': 'Completed',
-    },
-    {
-      'value': 'cancelled',
-      'label': 'Cancelled',
-    },
+  static const List<String> filters = [
+    "All",
+    "Pending",
+    "Accepted",
+    "Rejected",
+    "Cancelled",
+    "Completed",
   ];
 
-  Color _color(String status) {
-    switch (status) {
-      case 'open':
+  Color _color(String filter) {
+    switch (filter) {
+      case "Pending":
+        return AppColors.pending;
+
+      case "Accepted":
         return AppColors.accepted;
 
-      case 'full':
-        return AppColors.warning;
+      case "Rejected":
+        return AppColors.error;
 
-      case 'running':
-        return Colors.blue;
-
-      case 'completed':
-        return AppColors.completed;
-
-      case 'cancelled':
+      case "Cancelled":
         return AppColors.cancelled;
+
+      case "Completed":
+        return AppColors.completed;
 
       default:
         return AppColors.deepGreen;
@@ -76,19 +58,15 @@ class AdminSessionFilter extends StatelessWidget {
         itemBuilder: (context, index) {
           final filter = filters[index];
 
-          final value = filter['value']!;
-          final label = filter['label']!;
-
           final isSelected =
-              selectedStatus == value;
+              selectedFilter == filter;
 
-          final color = _color(value);
+          final color = _color(filter);
 
           return InkWell(
             borderRadius:
                 BorderRadius.circular(20),
-            onTap: () =>
-                onStatusChanged(value),
+            onTap: () => onChanged(filter),
             child: AnimatedContainer(
               duration: const Duration(
                 milliseconds: 180,
@@ -114,7 +92,7 @@ class AdminSessionFilter extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  label,
+                  filter,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: isSelected

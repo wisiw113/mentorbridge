@@ -11,7 +11,7 @@ class ActivityScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.lightMint,
+        backgroundColor: Colors.transparent,
 
         appBar: AppBar(
           title: const Text(
@@ -21,7 +21,7 @@ class ActivityScreen extends StatelessWidget {
               color: AppColors.deepGreen,
             ),
           ),
-          backgroundColor: AppColors.white,
+          backgroundColor: Colors.transparent,
           foregroundColor: AppColors.deepGreen,
           elevation: 0,
 
@@ -30,22 +30,27 @@ class ActivityScreen extends StatelessWidget {
             unselectedLabelColor: AppColors.gray,
             indicatorColor: AppColors.mintGreen,
             tabs: [
-              Tab(
-                text: "My appointments",
-              ),
-              Tab(
-                text: "My Sessions",
-              ),
+              Tab(text: "My appointments"),
+              Tab(text: "My Sessions"),
             ],
           ),
         ),
 
-            body: TabBarView(
-        children: [
-          PendingTab(),
-          MenteeSessionTab(),
-        ],
-      ),
+        extendBodyBehindAppBar: true,
+
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: AppColors.backgroundGradient,
+          ),
+          child: const SafeArea(
+            child: TabBarView(
+              children: [
+                PendingTab(),
+                MenteeSessionTab(),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

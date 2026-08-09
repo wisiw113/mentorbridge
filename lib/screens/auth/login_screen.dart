@@ -46,11 +46,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.softMint,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
+   return Scaffold(
+  backgroundColor: Colors.transparent,
+  body: Container(
+    width: double.infinity,
+    height: double.infinity,
+    decoration: const BoxDecoration(
+      gradient: AppColors.backgroundGradient,
+    ),
+    child: SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
             children: [
 
               /// ================= IMAGE =================
@@ -236,8 +242,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   static Widget _feature(
       IconData icon,

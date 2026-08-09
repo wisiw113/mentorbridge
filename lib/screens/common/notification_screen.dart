@@ -1,9 +1,13 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
+
+import '../../widgets/notification/notification_empty_state.dart';
+import '../../widgets/notification/notification_list.dart';
+
+import 'notification_detail_screen.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({
@@ -12,14 +16,13 @@ class NotificationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user =
-        FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
       return const Scaffold(
         body: Center(
           child: Text(
-            'Vui lòng đăng nhập.',
+            "Please login first.",
           ),
         ),
       );
@@ -31,29 +34,31 @@ class NotificationScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Thông báo',
+          "Notifications",
         ),
         actions: [
           IconButton(
+            tooltip: "Mark all as read",
+            icon: const Icon(
+              Icons.done_all_rounded,
+            ),
             onPressed: () async {
               try {
                 await notificationService
-                    .markAllAsRead(user.uid);
+                    .markAllAsRead(
+                  user.uid,
+                );
               } catch (e) {
                 debugPrint(
-                  'MARK ALL READ ERROR: $e',
+                  "MARK ALL READ ERROR: $e",
                 );
               }
             },
-            icon: const Icon(
-              Icons.done_all,
-            ),
           ),
         ],
       ),
 
-      body: StreamBuilder<
-          List<NotificationModel>>(
+      body: StreamBuilder<List<NotificationModel>>(
         stream: notificationService
             .getUserNotifications(
           user.uid,
@@ -62,24 +67,17 @@ class NotificationScreen extends StatelessWidget {
           context,
           snapshot,
         ) {
-
-          // =================================================
+          // ===========================
           // ERROR
-          // =================================================
+          // ===========================
 
           if (snapshot.hasError) {
-            debugPrint(
-              'NOTIFICATION STREAM ERROR: '
-              '${snapshot.error}',
-            );
-
             return Center(
               child: Padding(
                 padding:
-                    const EdgeInsets.all(20),
+                    const EdgeInsets.all(24),
                 child: Text(
-                  'Lỗi tải thông báo:\n\n'
-                  '${snapshot.error}',
+                  "Error loading notifications\n\n${snapshot.error}",
                   textAlign:
                       TextAlign.center,
                 ),
@@ -87,9 +85,9 @@ class NotificationScreen extends StatelessWidget {
             );
           }
 
-          // =================================================
+          // ===========================
           // LOADING
-          // =================================================
+          // ===========================
 
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
@@ -99,68 +97,46 @@ class NotificationScreen extends StatelessWidget {
             );
           }
 
-          // =================================================
+          // ===========================
           // DATA
-          // =================================================
+          // ===========================
 
           final notifications =
               snapshot.data ?? [];
 
           if (notifications.isEmpty) {
-            return const Center(
-              child: Text(
-                'Chưa có thông báo',
-              ),
-            );
+            return const NotificationEmptyState();
           }
 
-          return ListView.builder(
-            itemCount:
-                notifications.length,
-            itemBuilder: (
-              context,
-              index,
-            ) {
-              final notification =
-                  notifications[index];
+          return NotificationList(
+            notifications: notifications,
+            onTap: (
+              NotificationModel notification,
+            ) async {
+              if (!notification.isRead) {
+                try {
+                  await notificationService
+                      .markAsRead(
+                    notification.id,
+                  );
+                } catch (e) {
+                  debugPrint(
+                    "MARK READ ERROR: $e",
+                  );
+                }
+              }
 
-              return ListTile(
-                leading: Icon(
-                  notification.isRead
-                      ? Icons
-                          .notifications_none
-                      : Icons.notifications,
+              if (!context.mounted) return;
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      NotificationDetailScreen(
+                    notification:
+                        notification,
+                  ),
                 ),
-
-                title: Text(
-                  notification.title,
-                ),
-
-                subtitle: Text(
-                  notification.message,
-                ),
-
-                tileColor:
-                    notification.isRead
-                        ? null
-                        : Colors.green
-                            .withOpacity(0.08),
-
-                onTap: () async {
-                  if (!notification
-                      .isRead) {
-                    try {
-                      await notificationService
-                          .markAsRead(
-                        notification.id,
-                      );
-                    } catch (e) {
-                      debugPrint(
-                        'MARK AS READ ERROR: $e',
-                      );
-                    }
-                  }
-                },
               );
             },
           );
@@ -169,4 +145,3 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 }
-
