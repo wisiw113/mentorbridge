@@ -1,8 +1,8 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/models/appointment_model.dart';
 import 'package:flutter_application_1/models/appointment_rating_model.dart';
 
@@ -10,7 +10,6 @@ import 'package:flutter_application_1/services/appointment_service.dart';
 import 'package:flutter_application_1/services/appointment_rating_service.dart';
 
 import 'package:flutter_application_1/widgets/mentee/mentee_appointment_tab/appointment_card.dart';
-
 import 'package:flutter_application_1/widgets/common/rating_popup.dart';
 
 import 'package:flutter_application_1/widgets/mentee/mentee_appointment_tab/pending_filter_bar.dart';
@@ -39,13 +38,13 @@ class _PendingTabState extends State<PendingTab> {
       TextEditingController();
 
   // =========================================================
-  // SEARCH
+  // TÌM KIẾM
   // =========================================================
 
   String _searchText = '';
 
   // =========================================================
-  // FILTER + SORT
+  // LỌC + SẮP XẾP
   // =========================================================
 
   String _selectedStatus = 'all';
@@ -53,10 +52,11 @@ class _PendingTabState extends State<PendingTab> {
   String _selectedSort = 'nearest';
 
   // =========================================================
-  // FIRESTORE STREAM
+  // STREAM FIRESTORE
   //
-  // Tạo stream 1 lần duy nhất.
-  // Không tạo lại stream khi search.
+  // Chỉ tạo stream một lần.
+  // Khi tìm kiếm/lọc/sắp xếp chỉ xử lý dữ liệu local.
+  // Không tạo lại stream.
   // =========================================================
 
   Stream<List<AppointmentModel>>? _appointmentsStream;
@@ -65,13 +65,11 @@ class _PendingTabState extends State<PendingTab> {
   void initState() {
     super.initState();
 
-    final user =
-        FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
       _appointmentsStream =
-          _appointmentService
-              .getMenteeAppointments(
+          _appointmentService.getMenteeAppointments(
         user.uid,
       );
     }
@@ -84,7 +82,7 @@ class _PendingTabState extends State<PendingTab> {
   }
 
   // =========================================================
-  // FILTER + SEARCH + SORT
+  // LỌC + TÌM KIẾM + SẮP XẾP
   // =========================================================
 
   List<AppointmentModel> _filterAndSortAppointments(
@@ -92,10 +90,9 @@ class _PendingTabState extends State<PendingTab> {
   ) {
     final search = _searchText;
 
-    final filtered =
-        appointments.where((appointment) {
+    final filtered = appointments.where((appointment) {
       // =====================================================
-      // STATUS
+      // TRẠNG THÁI
       // =====================================================
 
       final status =
@@ -106,7 +103,7 @@ class _PendingTabState extends State<PendingTab> {
           status == _selectedStatus;
 
       // =====================================================
-      // SEARCH
+      // TÌM KIẾM
       // =====================================================
 
       final matchSearch =
@@ -128,7 +125,7 @@ class _PendingTabState extends State<PendingTab> {
     }).toList();
 
     // =======================================================
-    // SORT
+    // SẮP XẾP
     // =======================================================
 
     switch (_selectedSort) {
@@ -173,7 +170,7 @@ class _PendingTabState extends State<PendingTab> {
   }
 
   // =========================================================
-  // CLEAR FILTER
+  // XÓA BỘ LỌC
   // =========================================================
 
   void _clearFilter() {
@@ -187,7 +184,7 @@ class _PendingTabState extends State<PendingTab> {
   }
 
   // =========================================================
-  // CANCEL APPOINTMENT
+  // HỦY LỊCH HẸN
   // =========================================================
 
   Future<void> _cancelAppointment(
@@ -197,27 +194,22 @@ class _PendingTabState extends State<PendingTab> {
     final reasonController =
         TextEditingController();
 
-    final reason =
-        await showDialog<String>(
+    final reason = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text(
             'Hủy lịch hẹn',
           ),
-
           content: TextField(
             controller: reasonController,
             maxLines: 3,
-            decoration:
-                const InputDecoration(
+            decoration: const InputDecoration(
               hintText:
                   'Nhập lý do hủy lịch...',
-              border:
-                  OutlineInputBorder(),
+              border: OutlineInputBorder(),
             ),
           ),
-
           actions: [
             TextButton(
               onPressed: () {
@@ -229,13 +221,10 @@ class _PendingTabState extends State<PendingTab> {
                 'Không',
               ),
             ),
-
             ElevatedButton(
               onPressed: () {
                 final reason =
-                    reasonController
-                        .text
-                        .trim();
+                    reasonController.text.trim();
 
                 if (reason.isEmpty) {
                   ScaffoldMessenger.of(
@@ -256,12 +245,9 @@ class _PendingTabState extends State<PendingTab> {
                   reason,
                 );
               },
-              style:
-                  ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.red,
-                foregroundColor:
-                    Colors.white,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
               ),
               child: const Text(
                 'Hủy lịch',
@@ -280,20 +266,16 @@ class _PendingTabState extends State<PendingTab> {
     }
 
     try {
-      await _appointmentService
-          .cancelAppointment(
-        appointmentId:
-            appointment.id,
-        reason:
-            reason.trim(),
+      await _appointmentService.cancelAppointment(
+        appointmentId: appointment.id,
+        reason: reason.trim(),
       );
 
       if (!context.mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Đã hủy lịch hẹn.',
@@ -305,8 +287,7 @@ class _PendingTabState extends State<PendingTab> {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Không thể hủy lịch: $e',
@@ -317,11 +298,7 @@ class _PendingTabState extends State<PendingTab> {
   }
 
   // =========================================================
-  // APPOINTMENT DETAIL
-  // =========================================================
-  //
-  // Không dùng AppointmentDetailPopup nữa.
-  // Mở AppointmentDetailScreen.
+  // XEM CHI TIẾT LỊCH HẸN
   // =========================================================
 
   void _showAppointmentDetail(
@@ -331,8 +308,7 @@ class _PendingTabState extends State<PendingTab> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            AppointmentDetailScreen(
+        builder: (_) => AppointmentDetailScreen(
           appointment: appointment,
         ),
       ),
@@ -340,7 +316,7 @@ class _PendingTabState extends State<PendingTab> {
   }
 
   // =========================================================
-  // RATING
+  // ĐÁNH GIÁ LỊCH HẸN
   // =========================================================
 
   Future<void> _showRatingDialog(
@@ -351,8 +327,7 @@ class _PendingTabState extends State<PendingTab> {
     final result =
         await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (_) =>
-          const RatingPopup(),
+      builder: (_) => const RatingPopup(),
     );
 
     // Người dùng bấm Hủy
@@ -360,11 +335,8 @@ class _PendingTabState extends State<PendingTab> {
       return;
     }
 
-    final ratingValue =
-        result['rating'];
-
-    final commentValue =
-        result['comment'];
+    final ratingValue = result['rating'];
+    final commentValue = result['comment'];
 
     if (ratingValue == null) {
       return;
@@ -379,10 +351,7 @@ class _PendingTabState extends State<PendingTab> {
                 0;
 
     final String comment =
-        commentValue
-                ?.toString()
-                .trim() ??
-            '';
+        commentValue?.toString().trim() ?? '';
 
     if (rating < 1 || rating > 5) {
       return;
@@ -390,15 +359,13 @@ class _PendingTabState extends State<PendingTab> {
 
     try {
       // =====================================================
-      // CHECK ALREADY RATED
+      // KIỂM TRA ĐÃ ĐÁNH GIÁ CHƯA
       // =====================================================
 
       final alreadyRated =
           await _ratingService.hasRated(
-        appointmentId:
-            appointment.id,
-        menteeId:
-            menteeId,
+        appointmentId: appointment.id,
+        menteeId: menteeId,
       );
 
       if (alreadyRated) {
@@ -406,8 +373,7 @@ class _PendingTabState extends State<PendingTab> {
           return;
         }
 
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               'Bạn đã đánh giá lịch hẹn này rồi.',
@@ -419,41 +385,31 @@ class _PendingTabState extends State<PendingTab> {
       }
 
       // =====================================================
-      // CREATE RATING MODEL
+      // TẠO MODEL ĐÁNH GIÁ
       // =====================================================
 
-      final ratingModel =
-          AppointmentRatingModel(
+      final ratingModel = AppointmentRatingModel(
         id: '',
-        mentorId:
-            appointment.mentorId,
-        menteeId:
-            appointment.menteeId,
-        appointmentId:
-            appointment.id,
-        mentorName:
-            appointment.mentorName,
-        menteeName:
-            appointment.menteeName,
-        rating:
-            rating.toDouble(),
-        comment:
-            comment,
-        createdAt:
-            DateTime.now(),
+        mentorId: appointment.mentorId,
+        menteeId: appointment.menteeId,
+        appointmentId: appointment.id,
+        mentorName: appointment.mentorName,
+        menteeName: appointment.menteeName,
+        rating: rating.toDouble(),
+        comment: comment,
+        createdAt: DateTime.now(),
       );
 
       // =====================================================
-      // SAVE RATING
+      // LƯU ĐÁNH GIÁ
       // =====================================================
 
-      await _ratingService
-          .createRating(
+      await _ratingService.createRating(
         ratingModel,
       );
 
       // =====================================================
-      // UPDATE RATED
+      // CẬP NHẬT TRẠNG THÁI ĐÃ ĐÁNH GIÁ
       // =====================================================
 
       await FirebaseFirestore.instance
@@ -467,8 +423,7 @@ class _PendingTabState extends State<PendingTab> {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Cảm ơn bạn đã đánh giá Mentor!',
@@ -480,8 +435,7 @@ class _PendingTabState extends State<PendingTab> {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Không thể đánh giá: $e',
@@ -500,312 +454,344 @@ class _PendingTabState extends State<PendingTab> {
     final user =
         FirebaseAuth.instance.currentUser;
 
+    // =======================================================
+    // CHƯA ĐĂNG NHẬP
+    // =======================================================
+
     if (user == null) {
-      return const Center(
-        child: Text(
-          'Chưa đăng nhập',
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: AppColors.lightMint,
+        child: const Center(
+          child: Text(
+            'Chưa đăng nhập',
+          ),
         ),
       );
     }
 
     // =======================================================
-    // STREAM ĐÃ ĐƯỢC TẠO TỪ INITSTATE
+    // STREAM ĐƯỢC TẠO TỪ INITSTATE
     // =======================================================
 
-    final stream =
-        _appointmentsStream;
+    final stream = _appointmentsStream;
 
     if (stream == null) {
-      return const Center(
-        child: Text(
-          'Không thể tải lịch hẹn.',
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: AppColors.lightMint,
+        child: const Center(
+          child: Text(
+            'Không thể tải lịch hẹn.',
+          ),
         ),
       );
     }
 
-    return StreamBuilder<
-        List<AppointmentModel>>(
-      stream: stream,
-      builder: (
-        context,
-        snapshot,
-      ) {
-        // ===================================================
-        // LOADING
-        // ===================================================
+    // =======================================================
+    // NỀN TOÀN BỘ TAB
+    // =======================================================
 
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
-          return const Center(
-            child:
-                CircularProgressIndicator(),
-          );
-        }
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: AppColors.lightMint,
+      child: StreamBuilder<List<AppointmentModel>>(
+        stream: stream,
+        builder: (
+          context,
+          snapshot,
+        ) {
+          // ===================================================
+          // ĐANG TẢI
+          // ===================================================
 
-        // ===================================================
-        // ERROR
-        // ===================================================
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding:
-                  const EdgeInsets.all(24),
-              child: Text(
-                'Không thể tải lịch hẹn.\n'
-                '${snapshot.error}',
-                textAlign:
-                    TextAlign.center,
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.mintGreen,
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        // ===================================================
-        // ORIGINAL DATA
-        // ===================================================
+          // ===================================================
+          // LỖI
+          // ===================================================
 
-        final appointments =
-            snapshot.data ?? [];
-
-        // ===================================================
-        // FILTER + SEARCH + SORT
-        //
-        // Chỉ xử lý List local.
-        // Không gọi Firestore khi người dùng gõ.
-        // ===================================================
-
-        final filteredAppointments =
-            _filterAndSortAppointments(
-          appointments,
-        );
-
-        // ===================================================
-        // CHECK FILTER
-        // ===================================================
-
-        final isFiltered =
-            _searchText.isNotEmpty ||
-            _selectedStatus != 'all';
-
-        return Column(
-          children: [
-            // =================================================
-            // SEARCH BAR
-            // =================================================
-
-            Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                16,
-                16,
-                16,
-                8,
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding:
+                    const EdgeInsets.all(24),
+                child: Text(
+                  'Không thể tải lịch hẹn.\n'
+                  '${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
               ),
-              child: TextField(
-                controller:
-                    _searchController,
+            );
+          }
 
-                // =================================================
-                // SEARCH NGAY LẬP TỨC
-                //
-                // Không debounce.
-                // Không Timer.
-                // Không delay.
-                // =================================================
+          // ===================================================
+          // DỮ LIỆU GỐC
+          // ===================================================
 
-                onChanged: (value) {
-                  setState(() {
-                    _searchText =
-                        value
-                            .trim()
-                            .toLowerCase();
-                  });
-                },
+          final appointments =
+              snapshot.data ?? [];
 
-                decoration:
-                    InputDecoration(
-                  hintText:
-                      'Tìm Mentor, chủ đề, ghi chú...',
+          // ===================================================
+          // LỌC + TÌM KIẾM + SẮP XẾP
+          //
+          // Chỉ xử lý danh sách local.
+          // Không gọi Firestore khi người dùng nhập.
+          // ===================================================
 
-                  prefixIcon:
-                      const Icon(
-                    Icons.search,
-                  ),
+          final filteredAppointments =
+              _filterAndSortAppointments(
+            appointments,
+          );
 
-                  // =================================================
-                  // CLEAR SEARCH
-                  // =================================================
+          // ===================================================
+          // KIỂM TRA CÓ ĐANG LỌC KHÔNG
+          // ===================================================
 
-                  suffixIcon:
-                      _searchText.isNotEmpty
-                          ? IconButton(
-                              onPressed: () {
-                                _searchController
-                                    .clear();
+          final isFiltered =
+              _searchText.isNotEmpty ||
+              _selectedStatus != 'all';
 
-                                setState(() {
-                                  _searchText =
-                                      '';
-                                });
-                              },
-                              icon:
-                                  const Icon(
-                                Icons.clear,
-                              ),
-                            )
-                          : null,
+          return Column(
+            children: [
+              // =================================================
+              // THANH TÌM KIẾM
+              // =================================================
 
-                  filled: true,
-                  fillColor:
-                      Colors.grey.shade100,
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  8,
+                ),
+                child: TextField(
+                  controller:
+                      _searchController,
 
-                  border:
-                      OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius
-                            .circular(12),
-                    borderSide:
-                        BorderSide.none,
+                  // Tìm kiếm ngay lập tức
+                  onChanged: (value) {
+                    setState(() {
+                      _searchText = value
+                          .trim()
+                          .toLowerCase();
+                    });
+                  },
+
+                  decoration: InputDecoration(
+                    hintText:
+                        'Tìm Mentor, chủ đề, ghi chú...',
+
+                    prefixIcon:
+                        const Icon(
+                      Icons.search,
+                    ),
+
+                    // Xóa nội dung tìm kiếm
+                    suffixIcon:
+                        _searchText.isNotEmpty
+                            ? IconButton(
+                                onPressed: () {
+                                  _searchController
+                                      .clear();
+
+                                  setState(() {
+                                    _searchText =
+                                        '';
+                                  });
+                                },
+                                icon:
+                                    const Icon(
+                                  Icons.clear,
+                                ),
+                              )
+                            : null,
+
+                    filled: true,
+
+                    fillColor:
+                        AppColors.white,
+
+                    border:
+                        OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(
+                        12,
+                      ),
+                      borderSide:
+                          BorderSide.none,
+                    ),
+
+                    enabledBorder:
+                        OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(
+                        12,
+                      ),
+                      borderSide:
+                          BorderSide.none,
+                    ),
+
+                    focusedBorder:
+                        OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(
+                        12,
+                      ),
+                      borderSide:
+                          const BorderSide(
+                        color:
+                            AppColors.mintGreen,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // =================================================
-            // FILTER BAR
-            // =================================================
+              // =================================================
+              // THANH LỌC TRẠNG THÁI
+              // =================================================
 
-            PendingFilterBar(
-              selectedStatus:
-                  _selectedStatus,
-              onChanged: (value) {
-                setState(() {
-                  _selectedStatus =
-                      value;
-                });
-              },
-            ),
+              PendingFilterBar(
+                selectedStatus:
+                    _selectedStatus,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedStatus = value;
+                  });
+                },
+              ),
 
-            // =================================================
-            // SORT BAR
-            // =================================================
+              // =================================================
+              // THANH SẮP XẾP
+              // =================================================
 
-            PendingSortBar(
-              selectedSort:
-                  _selectedSort,
-              onChanged: (value) {
-                setState(() {
-                  _selectedSort =
-                      value;
-                });
-              },
-            ),
+              PendingSortBar(
+                selectedSort:
+                    _selectedSort,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSort = value;
+                  });
+                },
+              ),
 
-            // =================================================
-            // LIST
-            // =================================================
+              // =================================================
+              // DANH SÁCH LỊCH HẸN
+              // =================================================
 
-            Expanded(
-              child:
-                  filteredAppointments.isEmpty
-                      ? PendingEmptyState(
-                          isFiltered:
-                              isFiltered,
-                          onClearFilter:
-                              isFiltered
-                                  ? _clearFilter
-                                  : null,
-                        )
-                      : ListView.builder(
-                          padding:
-                              const EdgeInsets
-                                  .fromLTRB(
-                            0,
-                            4,
-                            0,
-                            30,
-                          ),
-                          itemCount:
-                              filteredAppointments
-                                  .length,
-                          itemBuilder:
-                              (
-                            context,
-                            index,
-                          ) {
-                            final appointment =
-                                filteredAppointments[
-                                    index];
+              Expanded(
+                child:
+                    filteredAppointments.isEmpty
+                        ? PendingEmptyState(
+                            isFiltered:
+                                isFiltered,
+                            onClearFilter:
+                                isFiltered
+                                    ? _clearFilter
+                                    : null,
+                          )
+                        : ListView.builder(
+                            padding:
+                                const EdgeInsets
+                                    .fromLTRB(
+                              0,
+                              4,
+                              0,
+                              30,
+                            ),
+                            itemCount:
+                                filteredAppointments
+                                    .length,
+                            itemBuilder:
+                                (
+                              context,
+                              index,
+                            ) {
+                              final appointment =
+                                  filteredAppointments[
+                                      index];
 
-                            final status =
-                                appointment
-                                    .status
-                                    .toLowerCase();
+                              final status =
+                                  appointment.status
+                                      .toLowerCase();
 
-                            // =================================================
-                            // CAN CANCEL
-                            // =================================================
+                              // =================================================
+                              // CÓ THỂ HỦY LỊCH
+                              // =================================================
 
-                            final canCancel =
-                                status ==
-                                        'pending' ||
-                                    status ==
-                                        'accepted';
+                              final canCancel =
+                                  status ==
+                                          'pending' ||
+                                      status ==
+                                          'accepted';
 
-                            // =================================================
-                            // CAN RATE
-                            // =================================================
+                              // =================================================
+                              // CÓ THỂ ĐÁNH GIÁ
+                              // =================================================
 
-                            final canRate =
-                                status ==
-                                        'completed' &&
-                                    !appointment
-                                        .rated;
+                              final canRate =
+                                  status ==
+                                          'completed' &&
+                                      !appointment
+                                          .rated;
 
-                            return GestureDetector(
-                              onTap: () {
-                                _showAppointmentDetail(
-                                  context,
-                                  appointment,
-                                );
-                              },
-
-                              child:
-                                  AppointmentCard(
-                                appointment:
+                              return GestureDetector(
+                                // Mở trang chi tiết
+                                onTap: () {
+                                  _showAppointmentDetail(
+                                    context,
                                     appointment,
+                                  );
+                                },
 
-                                // Hủy lịch
-                                onCancel:
-                                    canCancel
-                                        ? () {
-                                            _cancelAppointment(
-                                              context,
-                                              appointment,
-                                            );
-                                          }
-                                        : null,
+                                child:
+                                    AppointmentCard(
+                                  appointment:
+                                      appointment,
 
-                                // Đánh giá
-                                onRate:
-                                    canRate
-                                        ? () {
-                                            _showRatingDialog(
-                                              context,
-                                              appointment,
-                                              user.uid,
-                                            );
-                                          }
-                                        : null,
-                              ),
-                            );
-                          },
-                        ),
-            ),
-          ],
-        );
-      },
+                                  // Hủy lịch
+                                  onCancel:
+                                      canCancel
+                                          ? () {
+                                              _cancelAppointment(
+                                                context,
+                                                appointment,
+                                              );
+                                            }
+                                          : null,
+
+                                  // Đánh giá
+                                  onRate:
+                                      canRate
+                                          ? () {
+                                              _showRatingDialog(
+                                                context,
+                                                appointment,
+                                                user.uid,
+                                              );
+                                            }
+                                          : null,
+                                ),
+                              );
+                            },
+                          ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

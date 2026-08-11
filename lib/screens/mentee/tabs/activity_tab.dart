@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/core/theme/app_colors.dart';
+
 import 'pending_tab.dart';
 import 'mentee_session_tab.dart';
 
@@ -10,39 +11,42 @@ class ActivityScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
 
-        appBar: AppBar(
-          title: const Text(
-            "Activity",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.deepGreen,
+          appBar: AppBar(
+            title: const Text(
+              "Activity",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.deepGreen,
+              ),
+            ),
+            backgroundColor: Colors.transparent,
+            foregroundColor: AppColors.deepGreen,
+            elevation: 0,
+
+            bottom: const TabBar(
+              labelColor: AppColors.deepGreen,
+              unselectedLabelColor: AppColors.gray,
+              indicatorColor: AppColors.mintGreen,
+              tabs: [
+                Tab(
+                  text: "My appointments",
+                ),
+                Tab(
+                  text: "My Sessions",
+                ),
+              ],
             ),
           ),
-          backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.deepGreen,
-          elevation: 0,
 
-          bottom: const TabBar(
-            labelColor: AppColors.deepGreen,
-            unselectedLabelColor: AppColors.gray,
-            indicatorColor: AppColors.mintGreen,
-            tabs: [
-              Tab(text: "My appointments"),
-              Tab(text: "My Sessions"),
-            ],
-          ),
-        ),
-
-        extendBodyBehindAppBar: true,
-
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: AppColors.backgroundGradient,
-          ),
-          child: const SafeArea(
+          body: const SafeArea(
+            top: false,
             child: TabBarView(
               children: [
                 PendingTab(),

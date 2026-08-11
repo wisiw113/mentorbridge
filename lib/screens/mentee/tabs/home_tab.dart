@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,9 +23,11 @@ class HomeTab extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      return const Scaffold(
-        backgroundColor: AppColors.lightMint,
-        body: Center(
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: const Center(
           child: Text(
             'Chưa đăng nhập',
             style: TextStyle(
@@ -36,10 +39,13 @@ class HomeTab extends StatelessWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.lightMint,
-      body: SafeArea(
-        child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.backgroundGradient,
+      ),
+      child: SafeArea(
+        child: StreamBuilder<
+            DocumentSnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
@@ -48,32 +54,51 @@ class HomeTab extends StatelessWidget {
             if (userSnapshot.connectionState ==
                 ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: AppColors.mintGreen,
+                ),
               );
             }
 
-            final userData = userSnapshot.data?.data();
+            if (userSnapshot.hasError) {
+              return const _ErrorView(
+                message:
+                    'Không thể tải thông tin người dùng.',
+              );
+            }
 
-            // Lấy tên từ Firestore
+            final userData =
+                userSnapshot.data?.data();
+
             final name =
-                userData?['name']?.toString().trim().isNotEmpty == true
+                userData?['name']
+                            ?.toString()
+                            .trim()
+                            .isNotEmpty ==
+                        true
                     ? userData!['name'].toString()
                     : 'Bạn';
 
             return StreamBuilder<List<AppointmentModel>>(
               stream: AppointmentService()
                   .getMenteeAppointments(user.uid),
-              builder: (context, appointmentSnapshot) {
+              builder: (
+                context,
+                appointmentSnapshot,
+              ) {
                 if (appointmentSnapshot.connectionState ==
                     ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      color: AppColors.mintGreen,
+                    ),
                   );
                 }
 
                 if (appointmentSnapshot.hasError) {
                   return const _ErrorView(
-                    message: 'Không thể tải lịch hẹn.',
+                    message:
+                        'Không thể tải lịch hẹn.',
                   );
                 }
 
@@ -83,17 +108,23 @@ class HomeTab extends StatelessWidget {
                 return StreamBuilder<List<SessionModel>>(
                   stream: SessionService()
                       .getMenteeSessions(user.uid),
-                  builder: (context, sessionSnapshot) {
+                  builder: (
+                    context,
+                    sessionSnapshot,
+                  ) {
                     if (sessionSnapshot.connectionState ==
                         ConnectionState.waiting) {
                       return const Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                          color: AppColors.mintGreen,
+                        ),
                       );
                     }
 
                     if (sessionSnapshot.hasError) {
                       return const _ErrorView(
-                        message: 'Không thể tải Session.',
+                        message:
+                            'Không thể tải Session.',
                       );
                     }
 
@@ -181,7 +212,6 @@ class _HomeContent extends StatelessWidget {
       ),
     ];
 
-    // Sort toàn bộ lịch
     scheduleItems.sort(
       (a, b) => a.startAt.compareTo(b.startAt),
     );
@@ -193,7 +223,9 @@ class _HomeContent extends StatelessWidget {
     final upcomingAppointments = acceptedAppointments
         .where(
           (appointment) =>
-              appointment.startAt.isAfter(DateTime.now()),
+              appointment.startAt.isAfter(
+            DateTime.now(),
+          ),
         )
         .toList();
 
@@ -204,14 +236,14 @@ class _HomeContent extends StatelessWidget {
     final upcomingSessions = joinedSessions
         .where(
           (session) =>
-              session.startAt.isAfter(DateTime.now()),
+              session.startAt.isAfter(
+            DateTime.now(),
+          ),
         )
         .toList();
 
     // ========================================================
     // UPCOMING LEARNING
-    //
-    // Lấy lịch gần nhất giữa Appointment và Session
     // ========================================================
 
     final List<ScheduleItem> learningItems = [
@@ -282,7 +314,8 @@ class _HomeContent extends StatelessWidget {
         if (upcomingLearning == null)
           const _EmptyCard(
             icon: Icons.event_available_outlined,
-            message: 'Bạn chưa có lịch học sắp tới.',
+            message:
+                'Bạn chưa có lịch học sắp tới.',
           )
         else
           UpcomingLearningCard(
@@ -305,7 +338,8 @@ class _HomeContent extends StatelessWidget {
         if (upcomingSessions.isEmpty)
           const _EmptyCard(
             icon: Icons.groups_outlined,
-            message: 'Bạn chưa có Session sắp tham gia.',
+            message:
+                'Bạn chưa có Session sắp tham gia.',
           )
         else
           UpcomingSessionCard(
@@ -430,3 +464,4 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
+

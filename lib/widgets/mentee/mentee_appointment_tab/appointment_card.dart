@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -41,8 +42,7 @@ class AppointmentCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // =====================================================
               // HEADER
@@ -132,7 +132,7 @@ class AppointmentCard extends StatelessWidget {
                                   .trim()
                                   .isNotEmpty
                               ? appointment.topic
-                              : 'Appointment',
+                              : 'Lịch hẹn',
                           maxLines: 2,
                           overflow:
                               TextOverflow.ellipsis,
@@ -187,7 +187,7 @@ class AppointmentCard extends StatelessWidget {
                   const SizedBox(width: 8),
 
                   // =================================================
-                  // STATUS
+                  // TRẠNG THÁI
                   // =================================================
 
                   _StatusBadge(
@@ -205,7 +205,7 @@ class AppointmentCard extends StatelessWidget {
               const SizedBox(height: 14),
 
               // =====================================================
-              // DATE
+              // NGÀY
               // =====================================================
 
               Row(
@@ -234,7 +234,7 @@ class AppointmentCard extends StatelessWidget {
               const SizedBox(height: 10),
 
               // =====================================================
-              // TIME
+              // THỜI GIAN
               // =====================================================
 
               Row(
@@ -261,7 +261,7 @@ class AppointmentCard extends StatelessWidget {
               ),
 
               // =====================================================
-              // NOTE
+              // GHI CHÚ
               // =====================================================
 
               if (appointment.note
@@ -300,7 +300,7 @@ class AppointmentCard extends StatelessWidget {
               ],
 
               // =====================================================
-              // REJECT REASON
+              // LÝ DO TỪ CHỐI
               // =====================================================
 
               if (status == 'rejected' &&
@@ -355,7 +355,7 @@ class AppointmentCard extends StatelessWidget {
               ],
 
               // =====================================================
-              // ACTIONS
+              // NÚT THAO TÁC
               // =====================================================
 
               if (onCancel != null ||
@@ -365,7 +365,7 @@ class AppointmentCard extends StatelessWidget {
                 Row(
                   children: [
                     // =================================================
-                    // CANCEL
+                    // HỦY LỊCH
                     // =================================================
 
                     if (onCancel != null)
@@ -418,7 +418,7 @@ class AppointmentCard extends StatelessWidget {
                       ),
 
                     // =================================================
-                    // RATE
+                    // ĐÁNH GIÁ
                     // =================================================
 
                     if (onRate != null)
@@ -463,7 +463,7 @@ class AppointmentCard extends StatelessWidget {
               ],
 
               // =====================================================
-              // VIEW DETAIL
+              // XEM CHI TIẾT
               // =====================================================
 
               if (onCancel == null &&
@@ -505,7 +505,7 @@ class AppointmentCard extends StatelessWidget {
 }
 
 // =============================================================
-// STATUS BADGE
+// HIỂN THỊ TRẠNG THÁI
 // =============================================================
 
 class _StatusBadge extends StatelessWidget {
@@ -529,7 +529,7 @@ class _StatusBadge extends StatelessWidget {
         );
         textColor =
             Colors.orange.shade800;
-        text = 'Pending';
+        text = 'Đang chờ';
         break;
 
       case 'accepted':
@@ -537,7 +537,7 @@ class _StatusBadge extends StatelessWidget {
             AppColors.softMint;
         textColor =
             AppColors.deepGreen;
-        text = 'Accepted';
+        text = 'Đã chấp nhận';
         break;
 
       case 'rejected':
@@ -546,7 +546,7 @@ class _StatusBadge extends StatelessWidget {
           alpha: 0.10,
         );
         textColor = AppColors.error;
-        text = 'Rejected';
+        text = 'Đã từ chối';
         break;
 
       case 'completed':
@@ -557,7 +557,7 @@ class _StatusBadge extends StatelessWidget {
         );
         textColor =
             Colors.blue.shade700;
-        text = 'Completed';
+        text = 'Đã hoàn thành';
         break;
 
       case 'cancelled':
@@ -568,7 +568,7 @@ class _StatusBadge extends StatelessWidget {
         );
         textColor =
             Colors.grey.shade700;
-        text = 'Cancelled';
+        text = 'Đã hủy';
         break;
 
       default:
@@ -604,3 +604,4 @@ class _StatusBadge extends StatelessWidget {
     );
   }
 }
+

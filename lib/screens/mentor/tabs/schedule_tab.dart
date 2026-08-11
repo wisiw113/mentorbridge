@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:flutter_application_1/core/theme/app_colors.dart';
 import 'package:flutter_application_1/models/appointment_model.dart';
 import 'package:flutter_application_1/models/session_model.dart';
 
@@ -21,12 +22,10 @@ class ScheduleTab extends StatefulWidget {
   const ScheduleTab({super.key});
 
   @override
-  State<ScheduleTab> createState() =>
-      _ScheduleTabState();
+  State<ScheduleTab> createState() => _ScheduleTabState();
 }
 
-class _ScheduleTabState
-    extends State<ScheduleTab> {
+class _ScheduleTabState extends State<ScheduleTab> {
   final AppointmentService _appointmentService =
       AppointmentService();
 
@@ -34,6 +33,10 @@ class _ScheduleTabState
       SessionService();
 
   DateTime? selectedDate = DateTime.now();
+
+  // =========================================================
+  // PARSE DATE
+  // =========================================================
 
   DateTime parseDate(String date) {
     final parts = date.split("-");
@@ -49,6 +52,10 @@ class _ScheduleTabState
     );
   }
 
+  // =========================================================
+  // CHECK SAME DATE
+  // =========================================================
+
   bool isSameDate(
     DateTime a,
     DateTime b,
@@ -58,11 +65,19 @@ class _ScheduleTabState
         a.day == b.day;
   }
 
+  // =========================================================
+  // FORMAT DATE
+  // =========================================================
+
   String formatDate(DateTime date) {
     return "${date.day.toString().padLeft(2, '0')}/"
         "${date.month.toString().padLeft(2, '0')}/"
         "${date.year}";
   }
+
+  // =========================================================
+  // SHOW APPOINTMENT DETAIL
+  // =========================================================
 
   void _showAppointmentDetail(
     BuildContext context,
@@ -76,6 +91,7 @@ class _ScheduleTabState
             "Chi tiết cuộc hẹn",
             style: TextStyle(
               fontWeight: FontWeight.bold,
+              color: AppColors.deepGreen,
             ),
           ),
           content: Column(
@@ -86,33 +102,37 @@ class _ScheduleTabState
               Text(
                 "Người học: ${appointment.menteeName}",
               ),
+
               const SizedBox(height: 12),
+
               Row(
                 children: [
                   const Icon(
                     Icons.calendar_month,
                     size: 18,
+                    color: AppColors.mintGreen,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    appointment.date,
-                  ),
+                  Text(appointment.date),
                 ],
               ),
+
               const SizedBox(height: 8),
+
               Row(
                 children: [
                   const Icon(
                     Icons.schedule,
                     size: 18,
+                    color: AppColors.mintGreen,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    appointment.time,
-                  ),
+                  Text(appointment.time),
                 ],
               ),
+
               const SizedBox(height: 8),
+
               Row(
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
@@ -120,6 +140,7 @@ class _ScheduleTabState
                   const Icon(
                     Icons.notes,
                     size: 18,
+                    color: AppColors.mintGreen,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -138,13 +159,22 @@ class _ScheduleTabState
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text("Đóng"),
+              child: const Text(
+                "Đóng",
+                style: TextStyle(
+                  color: AppColors.deepGreen,
+                ),
+              ),
             ),
           ],
         );
       },
     );
   }
+
+  // =========================================================
+  // SELECT DATE
+  // =========================================================
 
   Future<void> _selectDate(
     BuildContext context,
@@ -186,260 +216,390 @@ class _ScheduleTabState
     }
   }
 
+  // =========================================================
+  // BUILD
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
     final user =
         FirebaseAuth.instance.currentUser;
 
+    // =======================================================
+    // CHƯA ĐĂNG NHẬP
+    // =======================================================
+
     if (user == null) {
-      return const Center(
-        child: Text("Chưa đăng nhập"),
+      return Container(
+        decoration: const BoxDecoration(
+          gradient:
+              AppColors.backgroundGradient,
+        ),
+        child: const Center(
+          child: Text(
+            "Chưa đăng nhập",
+            style: TextStyle(
+              color: AppColors.deepGreen,
+            ),
+          ),
+        ),
       );
     }
 
-    return StreamBuilder<
-        List<AppointmentModel>>(
-      // FIX:
-      // getMentorRequests() không tồn tại
-      // trong AppointmentService.
-      stream: _appointmentService
-          .getMentorAppointments(
-        user.uid,
+    // =======================================================
+    // BACKGROUND GRADIENT
+    // =======================================================
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.backgroundGradient,
       ),
-      builder: (
-        context,
-        appointmentSnapshot,
-      ) {
-        if (appointmentSnapshot
-                .connectionState ==
-            ConnectionState.waiting) {
-          return const Center(
-            child:
-                CircularProgressIndicator(),
-          );
-        }
+      child: StreamBuilder<
+          List<AppointmentModel>>(
+        // =====================================================
+        // APPOINTMENTS
+        // =====================================================
 
-        if (appointmentSnapshot.hasError) {
-          return Center(
-            child: Text(
-              "Lỗi tải dữ liệu cuộc hẹn:\n"
-              "${appointmentSnapshot.error}",
-              textAlign:
-                  TextAlign.center,
-            ),
-          );
-        }
+        stream: _appointmentService
+            .getMentorAppointments(
+          user.uid,
+        ),
 
-        return StreamBuilder<
-            List<SessionModel>>(
-          stream: _sessionService
-              .getMentorSessions(
-            user.uid,
-          ),
-          builder: (
-            context,
-            sessionSnapshot,
-          ) {
-            if (sessionSnapshot
-                    .connectionState ==
-                ConnectionState.waiting) {
-              return const Center(
-                child:
-                    CircularProgressIndicator(),
-              );
-            }
+        builder: (
+          context,
+          appointmentSnapshot,
+        ) {
+          // ===================================================
+          // LOADING APPOINTMENT
+          // ===================================================
 
-            if (sessionSnapshot.hasError) {
-              return Center(
+          if (appointmentSnapshot
+                  .connectionState ==
+              ConnectionState.waiting) {
+            return const Center(
+              child:
+                  CircularProgressIndicator(
+                color: AppColors.mintGreen,
+              ),
+            );
+          }
+
+          // ===================================================
+          // ERROR APPOINTMENT
+          // ===================================================
+
+          if (appointmentSnapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding:
+                    const EdgeInsets.all(24),
                 child: Text(
-                  "Lỗi tải dữ liệu buổi học nhóm:\n"
-                  "${sessionSnapshot.error}",
+                  "Lỗi tải dữ liệu cuộc hẹn:\n"
+                  "${appointmentSnapshot.error}",
                   textAlign:
                       TextAlign.center,
-                ),
-              );
-            }
-
-            final appointments =
-                appointmentSnapshot.data ??
-                    [];
-
-            final sessions =
-                sessionSnapshot.data ?? [];
-
-            final bookedDates = [
-              ...appointments
-                  .where(
-                    (appointment) =>
-                        appointment.status ==
-                            "accepted" ||
-                        appointment.status ==
-                            "completed",
-                  )
-                  .map(
-                    (appointment) =>
-                        parseDate(
-                      appointment.date,
-                    ),
+                  style: const TextStyle(
+                    color: AppColors.error,
                   ),
-              ...sessions.map(
-                (session) =>
-                    parseDate(
-                  session.date,
                 ),
               ),
-            ];
-
-            final selectedAppointments =
-                selectedDate == null
-                    ? <AppointmentModel>[]
-                    : appointments
-                        .where(
-                          (appointment) {
-                            return isSameDate(
-                              parseDate(
-                                appointment.date,
-                              ),
-                              selectedDate!,
-                            );
-                          },
-                        )
-                        .toList();
-
-            final selectedSessions =
-                selectedDate == null
-                    ? <SessionModel>[]
-                    : sessions
-                        .where(
-                          (session) {
-                            return isSameDate(
-                              parseDate(
-                                session.date,
-                              ),
-                              selectedDate!,
-                            );
-                          },
-                        )
-                        .toList();
-
-            return Column(
-              children: [
-                ScheduleDateSelector(
-                  selectedDate:
-                      selectedDate,
-                  dateText:
-                      selectedDate == null
-                          ? "Chọn ngày"
-                          : formatDate(
-                              selectedDate!,
-                            ),
-                  onTap: () {
-                    _selectDate(
-                      context,
-                      bookedDates,
-                    );
-                  },
-                ),
-                Expanded(
-                  child: selectedDate == null
-                      ? const Center(
-                          child: Text(
-                            "Chọn ngày để xem lịch",
-                          ),
-                        )
-                      : ListView(
-                          padding:
-                              const EdgeInsets.only(
-                            bottom: 30,
-                          ),
-                          children: [
-                            const SectionTitle(
-                              title: "Cuộc hẹn",
-                            ),
-                            if (selectedAppointments
-                                .isEmpty)
-                              const ScheduleEmptyCard(
-                                message:
-                                    "Không có cuộc hẹn nào trong ngày này.",
-                              ),
-                            ...selectedAppointments
-                                .map(
-                              (appointment) {
-                                return AppointmentScheduleCard(
-                                  appointment:
-                                      appointment,
-                                  onTap: () {
-                                    _showAppointmentDetail(
-                                      context,
-                                      appointment,
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                            const SizedBox(
-                              height: 20,
-                            ),
-                            const SectionTitle(
-                              title:
-                                  "Buổi học nhóm",
-                            ),
-                            if (selectedSessions
-                                .isEmpty)
-                              const ScheduleEmptyCard(
-                                message:
-                                    "Không có buổi học nhóm nào trong ngày này.",
-                              ),
-                            ...selectedSessions
-                                .map(
-                              (session) {
-                                return SessionCard(
-                                  title:
-                                      session.title,
-                                  description:
-                                      session
-                                          .description,
-                                  date:
-                                      session.date,
-                                  startTime:
-                                      session
-                                          .startTime,
-                                  endTime:
-                                      session.endTime,
-                                  bookedSlots:
-                                      session
-                                          .bookedSlots,
-                                  maxSlots:
-                                      session
-                                          .maxSlots,
-                                  status:
-                                      session.status,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) =>
-                                                SessionDetailScreen(
-                                          session:
-                                              session,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  onJoin: null,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                ),
-              ],
             );
-          },
-        );
-      },
+          }
+
+          // ===================================================
+          // SESSION STREAM
+          // ===================================================
+
+          return StreamBuilder<
+              List<SessionModel>>(
+            stream: _sessionService
+                .getMentorSessions(
+              user.uid,
+            ),
+
+            builder: (
+              context,
+              sessionSnapshot,
+            ) {
+              // =============================================
+              // LOADING SESSION
+              // =============================================
+
+              if (sessionSnapshot
+                      .connectionState ==
+                  ConnectionState.waiting) {
+                return const Center(
+                  child:
+                      CircularProgressIndicator(
+                    color:
+                        AppColors.mintGreen,
+                  ),
+                );
+              }
+
+              // =============================================
+              // ERROR SESSION
+              // =============================================
+
+              if (sessionSnapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.all(
+                      24,
+                    ),
+                    child: Text(
+                      "Lỗi tải dữ liệu buổi học nhóm:\n"
+                      "${sessionSnapshot.error}",
+                      textAlign:
+                          TextAlign.center,
+                      style:
+                          const TextStyle(
+                        color:
+                            AppColors.error,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              // =============================================
+              // DATA
+              // =============================================
+
+              final appointments =
+                  appointmentSnapshot.data ??
+                      [];
+
+              final sessions =
+                  sessionSnapshot.data ?? [];
+
+              // =============================================
+              // BOOKED DATES
+              // =============================================
+
+              final bookedDates = [
+                ...appointments
+                    .where(
+                      (appointment) =>
+                          appointment.status ==
+                              "accepted" ||
+                          appointment.status ==
+                              "completed",
+                    )
+                    .map(
+                      (appointment) =>
+                          parseDate(
+                        appointment.date,
+                      ),
+                    ),
+
+                ...sessions.map(
+                  (session) =>
+                      parseDate(
+                    session.date,
+                  ),
+                ),
+              ];
+
+              // =============================================
+              // SELECTED APPOINTMENTS
+              // =============================================
+
+              final selectedAppointments =
+                  selectedDate == null
+                      ? <AppointmentModel>[]
+                      : appointments
+                          .where(
+                            (appointment) {
+                              return isSameDate(
+                                parseDate(
+                                  appointment.date,
+                                ),
+                                selectedDate!,
+                              );
+                            },
+                          )
+                          .toList();
+
+              // =============================================
+              // SELECTED SESSIONS
+              // =============================================
+
+              final selectedSessions =
+                  selectedDate == null
+                      ? <SessionModel>[]
+                      : sessions
+                          .where(
+                            (session) {
+                              return isSameDate(
+                                parseDate(
+                                  session.date,
+                                ),
+                                selectedDate!,
+                              );
+                            },
+                          )
+                          .toList();
+
+              // =============================================
+              // MAIN CONTENT
+              // =============================================
+
+              return Column(
+                children: [
+                  // =========================================
+                  // DATE SELECTOR
+                  // =========================================
+
+                  ScheduleDateSelector(
+                    selectedDate:
+                        selectedDate,
+                    dateText:
+                        selectedDate == null
+                            ? "Chọn ngày"
+                            : formatDate(
+                                selectedDate!,
+                              ),
+                    onTap: () {
+                      _selectDate(
+                        context,
+                        bookedDates,
+                      );
+                    },
+                  ),
+
+                  // =========================================
+                  // CONTENT
+                  // =========================================
+
+                  Expanded(
+                    child:
+                        selectedDate == null
+                            ? const Center(
+                                child: Text(
+                                  "Chọn ngày để xem lịch",
+                                  style:
+                                      TextStyle(
+                                    color: AppColors
+                                        .darkGray,
+                                  ),
+                                ),
+                              )
+                            : ListView(
+                                padding:
+                                    const EdgeInsets.only(
+                                  left: 16,
+                                  right: 16,
+                                  bottom: 30,
+                                ),
+                                children: [
+                                  // =================================
+                                  // APPOINTMENTS
+                                  // =================================
+
+                                  const SectionTitle(
+                                    title:
+                                        "Cuộc hẹn",
+                                  ),
+
+                                  if (selectedAppointments
+                                      .isEmpty)
+                                    const ScheduleEmptyCard(
+                                      message:
+                                          "Không có cuộc hẹn nào trong ngày này.",
+                                    ),
+
+                                  ...selectedAppointments
+                                      .map(
+                                    (
+                                      appointment,
+                                    ) {
+                                      return AppointmentScheduleCard(
+                                        appointment:
+                                            appointment,
+                                        onTap: () {
+                                          _showAppointmentDetail(
+                                            context,
+                                            appointment,
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+
+                                  // =================================
+                                  // SESSIONS
+                                  // =================================
+
+                                  const SectionTitle(
+                                    title:
+                                        "Buổi học nhóm",
+                                  ),
+
+                                  if (selectedSessions
+                                      .isEmpty)
+                                    const ScheduleEmptyCard(
+                                      message:
+                                          "Không có buổi học nhóm nào trong ngày này.",
+                                    ),
+
+                                  ...selectedSessions
+                                      .map(
+                                    (session) {
+                                      return SessionCard(
+                                        title:
+                                            session.title,
+                                        description:
+                                            session.description,
+                                        date:
+                                            session.date,
+                                        startTime:
+                                            session.startTime,
+                                        endTime:
+                                            session.endTime,
+                                        bookedSlots:
+                                            session.bookedSlots,
+                                        maxSlots:
+                                            session.maxSlots,
+                                        status:
+                                            session.status,
+
+                                        // ===========================
+                                        // OPEN SESSION DETAIL
+                                        // ===========================
+
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (_) =>
+                                                      SessionDetailScreen(
+                                                session:
+                                                    session,
+                                              ),
+                                            ),
+                                          );
+                                        },
+
+                                        onJoin: null,
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
-

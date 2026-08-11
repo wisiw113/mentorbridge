@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,27 +23,40 @@ import '../../../screens/common/appointment_detail_screen.dart';
 import '../../../screens/mentor/screens/session_detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+  const HomeTab({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user =
+        FirebaseAuth.instance.currentUser;
 
     // =========================================================
     // CHƯA ĐĂNG NHẬP
     // =========================================================
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(
-          child: Text("Chưa đăng nhập"),
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: const Center(
+          child: Text(
+            "Chưa đăng nhập",
+            style: TextStyle(
+              color: AppColors.deepGreen,
+            ),
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.lightMint,
-      body: SafeArea(
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.backgroundGradient,
+      ),
+      child: SafeArea(
         child: FutureBuilder<
             DocumentSnapshot<Map<String, dynamic>>>(
           future: FirebaseFirestore.instance
@@ -60,7 +74,9 @@ class HomeTab extends StatelessWidget {
             if (userSnapshot.connectionState ==
                 ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: AppColors.mintGreen,
+                ),
               );
             }
 
@@ -72,6 +88,9 @@ class HomeTab extends StatelessWidget {
               return const Center(
                 child: Text(
                   "Không thể tải thông tin người dùng",
+                  style: TextStyle(
+                    color: AppColors.error,
+                  ),
                 ),
               );
             }
@@ -102,7 +121,9 @@ class HomeTab extends StatelessWidget {
 
                 if (!appointmentSnapshot.hasData) {
                   return const Center(
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      color: AppColors.mintGreen,
+                    ),
                   );
                 }
 
@@ -130,7 +151,9 @@ class HomeTab extends StatelessWidget {
                     if (!sessionSnapshot.hasData) {
                       return const Center(
                         child:
-                            CircularProgressIndicator(),
+                            CircularProgressIndicator(
+                          color: AppColors.mintGreen,
+                        ),
                       );
                     }
 
@@ -182,7 +205,12 @@ class HomeTab extends StatelessWidget {
 
                     return ListView(
                       padding:
-                          const EdgeInsets.all(16),
+                          const EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        120,
+                      ),
                       children: [
                         // =================================================
                         // GREETING
@@ -317,18 +345,13 @@ class HomeTab extends StatelessWidget {
                             appointment:
                                 upcomingAppointments
                                     .first,
-
-                            // =================================================
-                            // BẤM VIEW DETAILS
-                            // -> APPOINTMENT DETAIL SCREEN
-                            // =================================================
-
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      AppointmentDetailScreen(
+                                  builder:
+                                      (context) =>
+                                          AppointmentDetailScreen(
                                     appointment:
                                         upcomingAppointments
                                             .first,
@@ -353,12 +376,6 @@ class HomeTab extends StatelessWidget {
                             session:
                                 upcomingSessions
                                     .first,
-
-                            // =================================================
-                            // BẤM VIEW DETAILS
-                            // -> SESSION DETAIL SCREEN
-                            // =================================================
-
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -402,3 +419,4 @@ class HomeTab extends StatelessWidget {
     );
   }
 }
+

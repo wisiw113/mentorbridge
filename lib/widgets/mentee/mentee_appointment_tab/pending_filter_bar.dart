@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class PendingFilterBar extends StatelessWidget {
@@ -30,23 +31,23 @@ class PendingFilterBar extends StatelessWidget {
   String _getLabel(String status) {
     switch (status) {
       case 'pending':
-        return 'Pending';
+        return 'Đang chờ';
 
       case 'accepted':
-        return 'Accepted';
+        return 'Đã chấp nhận';
 
       case 'completed':
-        return 'Completed';
+        return 'Đã hoàn thành';
 
       case 'rejected':
-        return 'Rejected';
+        return 'Đã từ chối';
 
       case 'cancelled':
-        return 'Cancelled';
+        return 'Đã hủy';
 
       case 'all':
       default:
-        return 'All';
+        return 'Tất cả';
     }
   }
 
@@ -141,6 +142,10 @@ class PendingFilterBar extends StatelessWidget {
               onChanged(status);
             },
 
+            // =================================================
+            // ICON
+            // =================================================
+
             avatar: Icon(
               _getIcon(status),
               size: 17,
@@ -149,14 +154,30 @@ class PendingFilterBar extends StatelessWidget {
                   : color,
             ),
 
+            // =================================================
+            // TÊN HIỂN THỊ
+            // =================================================
+
             label: Text(
               _getLabel(status),
             ),
 
+            // =================================================
+            // MÀU KHI ĐƯỢC CHỌN
+            // =================================================
+
             selectedColor: color,
+
+            // =================================================
+            // MÀU NỀN
+            // =================================================
 
             backgroundColor:
                 Colors.grey.shade100,
+
+            // =================================================
+            // BORDER
+            // =================================================
 
             side: BorderSide(
               color: isSelected
@@ -164,10 +185,18 @@ class PendingFilterBar extends StatelessWidget {
                   : Colors.grey.shade300,
             ),
 
+            // =================================================
+            // BO GÓC
+            // =================================================
+
             shape: RoundedRectangleBorder(
               borderRadius:
                   BorderRadius.circular(20),
             ),
+
+            // =================================================
+            // TEXT STYLE
+            // =================================================
 
             labelStyle: TextStyle(
               color: isSelected
@@ -177,6 +206,10 @@ class PendingFilterBar extends StatelessWidget {
               fontWeight:
                   FontWeight.w600,
             ),
+
+            // =================================================
+            // PADDING
+            // =================================================
 
             padding:
                 const EdgeInsets.symmetric(
@@ -189,3 +222,4 @@ class PendingFilterBar extends StatelessWidget {
     );
   }
 }
+

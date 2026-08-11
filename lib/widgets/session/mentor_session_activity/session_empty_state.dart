@@ -20,7 +20,7 @@ class SessionEmptyState extends StatelessWidget {
             const SizedBox(height: 16),
 
             const Text(
-              'No Sessions Yet',
+              'Chưa có khóa học nào',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -30,7 +30,7 @@ class SessionEmptyState extends StatelessWidget {
             const SizedBox(height: 8),
 
             Text(
-              'Create your first session to start\nmentoring your mentees.',
+              'Tạo khóa học đầu tiên của bạn để bắt đầu\nhuấn luyện học viên của bạn.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey.shade600,

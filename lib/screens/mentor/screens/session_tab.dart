@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +12,8 @@ import 'package:flutter_application_1/widgets/session/mentor_session_activity/se
 import 'package:flutter_application_1/screens/mentor/screens/create_session_screen.dart';
 import 'package:flutter_application_1/screens/mentor/screens/session_detail_screen.dart';
 
+import 'package:flutter_application_1/core/theme/app_colors.dart';
+
 class SessionTab extends StatefulWidget {
   const SessionTab({
     super.key,
@@ -23,8 +24,7 @@ class SessionTab extends StatefulWidget {
 }
 
 class _SessionTabState extends State<SessionTab> {
-  final SessionService _sessionService =
-      SessionService();
+  final SessionService _sessionService = SessionService();
 
   final TextEditingController _searchController =
       TextEditingController();
@@ -43,8 +43,6 @@ class _SessionTabState extends State<SessionTab> {
 
   // =========================================================
   // STREAM
-  // Tạo một lần duy nhất.
-  // Không tạo lại khi search.
   // =========================================================
 
   Stream<List<SessionModel>>? _sessionsStream;
@@ -53,12 +51,10 @@ class _SessionTabState extends State<SessionTab> {
   void initState() {
     super.initState();
 
-    final user =
-        FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      _sessionsStream =
-          _sessionService.getMentorSessions(
+      _sessionsStream = _sessionService.getMentorSessions(
         user.uid,
       );
     }
@@ -77,8 +73,7 @@ class _SessionTabState extends State<SessionTab> {
   List<SessionModel> _filterSessions(
     List<SessionModel> sessions,
   ) {
-    final search =
-        _searchText.trim().toLowerCase();
+    final search = _searchText.trim().toLowerCase();
 
     return sessions.where((session) {
       // =====================================================
@@ -87,12 +82,8 @@ class _SessionTabState extends State<SessionTab> {
 
       final matchSearch =
           search.isEmpty ||
-          session.title
-              .toLowerCase()
-              .contains(search) ||
-          session.description
-              .toLowerCase()
-              .contains(search);
+          session.title.toLowerCase().contains(search) ||
+          session.description.toLowerCase().contains(search);
 
       // =====================================================
       // FILTER STATUS
@@ -100,27 +91,20 @@ class _SessionTabState extends State<SessionTab> {
 
       final matchStatus =
           _selectedFilter == 'all' ||
-          session.status
-              .toLowerCase() ==
-              _selectedFilter
-                  .toLowerCase();
+          session.status.toLowerCase() ==
+              _selectedFilter.toLowerCase();
 
-      return matchSearch &&
-          matchStatus;
+      return matchSearch && matchStatus;
     }).toList();
   }
 
   // =========================================================
   // SEARCH CHANGED
-  // Giống SearchTab / PendingTab
   // =========================================================
 
-  void _onSearchChanged(
-    String value,
-  ) {
+  void _onSearchChanged(String value) {
     setState(() {
-      _searchText =
-          value.trim().toLowerCase();
+      _searchText = value.trim().toLowerCase();
     });
   }
 
@@ -128,9 +112,7 @@ class _SessionTabState extends State<SessionTab> {
   // FILTER CHANGED
   // =========================================================
 
-  void _onFilterChanged(
-    String value,
-  ) {
+  void _onFilterChanged(String value) {
     setState(() {
       _selectedFilter = value;
     });
@@ -144,8 +126,7 @@ class _SessionTabState extends State<SessionTab> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            const CreateSessionScreen(),
+        builder: (_) => const CreateSessionScreen(),
       ),
     );
   }
@@ -160,8 +141,7 @@ class _SessionTabState extends State<SessionTab> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            SessionDetailScreen(
+        builder: (_) => SessionDetailScreen(
           session: session,
         ),
       ),
@@ -173,20 +153,22 @@ class _SessionTabState extends State<SessionTab> {
   // =========================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final user =
-        FirebaseAuth.instance.currentUser;
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
 
     // =========================================================
     // NOT LOGIN
     // =========================================================
 
     if (user == null) {
-      return const Center(
-        child: Text(
-          'Chưa đăng nhập',
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: const Center(
+          child: Text(
+            'Chưa đăng nhập',
+          ),
         ),
       );
     }
@@ -198,136 +180,152 @@ class _SessionTabState extends State<SessionTab> {
     final stream = _sessionsStream;
 
     if (stream == null) {
-      return const Center(
-        child: Text(
-          'Không thể tải Session.',
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: const Center(
+          child: Text(
+            'Không thể tải Session.',
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor:
-          Colors.transparent,
+      backgroundColor: Colors.transparent,
 
-      body: StreamBuilder<
-          List<SessionModel>>(
-        stream: stream,
+      // =======================================================
+      // BODY
+      // =======================================================
 
-        builder: (
-          context,
-          snapshot,
-        ) {
-          // ===================================================
-          // LOADING
-          // ===================================================
-
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child:
-                  CircularProgressIndicator(),
-            );
-          }
-
-          // ===================================================
-          // ERROR
-          // ===================================================
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding:
-                    const EdgeInsets.all(
-                  20,
-                ),
-                child: Text(
-                  'Không thể tải Session.\n${snapshot.error}',
-                  textAlign:
-                      TextAlign.center,
-                ),
-              ),
-            );
-          }
-
-          // ===================================================
-          // ALL SESSIONS
-          // ===================================================
-
-          final sessions =
-              snapshot.data ?? [];
-
-          // ===================================================
-          // FILTERED SESSIONS
-          // ===================================================
-
-          final filteredSessions =
-              _filterSessions(
-            sessions,
-          );
-
-          return Column(
-            children: [
-              // =================================================
-              // SEARCH BAR
-              // =================================================
-
-              SessionSearchBar(
-                controller:
-                    _searchController,
-
-                // Gõ tới đâu lọc tới đó
-                // Không debounce
-                // Không delay
-                onChanged:
-                    _onSearchChanged,
-              ),
-
-              // =================================================
-              // FILTER BAR
-              // =================================================
-
-              SessionFilterBar(
-                selectedStatus:
-                    _selectedFilter,
-                onChanged:
-                    _onFilterChanged,
-              ),
-
-              const SizedBox(
-                height: 8,
-              ),
-
-              // =================================================
-              // SESSION LIST
-              // =================================================
-
-              Expanded(
-                child:
-                    _buildSessionContent(
-                  sessions:
-                      sessions,
-                  filteredSessions:
-                      filteredSessions,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-
-      // =========================================================
-      // CREATE SESSION BUTTON
-      // =========================================================
-
-      floatingActionButton:
-          FloatingActionButton.extended(
-        onPressed:
-            _createSession,
-        icon: const Icon(
-          Icons.add,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
         ),
-        label: const Text(
-          'Create Session',
+
+        child: Stack(
+          children: [
+            // =================================================
+            // SESSION CONTENT
+            // =================================================
+
+            Positioned.fill(
+              child: StreamBuilder<List<SessionModel>>(
+                stream: stream,
+                builder: (
+                  context,
+                  snapshot,
+                ) {
+                  // ===========================================
+                  // LOADING
+                  // ===========================================
+
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.mintGreen,
+                      ),
+                    );
+                  }
+
+                  // ===========================================
+                  // ERROR
+                  // ===========================================
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          'Không thể tải Session.\n${snapshot.error}',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
+
+                  // ===========================================
+                  // ALL SESSIONS
+                  // ===========================================
+
+                  final sessions = snapshot.data ?? [];
+
+                  // ===========================================
+                  // FILTERED SESSIONS
+                  // ===========================================
+
+                  final filteredSessions =
+                      _filterSessions(sessions);
+
+                  return Column(
+                    children: [
+                      // =======================================
+                      // SEARCH BAR
+                      // =======================================
+
+                      SessionSearchBar(
+                        controller: _searchController,
+                        onChanged: _onSearchChanged,
+                      ),
+
+                      // =======================================
+                      // FILTER BAR
+                      // =======================================
+
+                      SessionFilterBar(
+                        selectedStatus: _selectedFilter,
+                        onChanged: _onFilterChanged,
+                      ),
+
+                      const SizedBox(
+                        height: 8,
+                      ),
+
+                      // =======================================
+                      // SESSION LIST
+                      // =======================================
+
+                      Expanded(
+                        child: _buildSessionContent(
+                          sessions: sessions,
+                          filteredSessions: filteredSessions,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+
+            // =================================================
+            // CREATE SESSION BUTTON
+            //
+            // ĐẶT BÊN TRÁI + CAO HƠN NAVBAR
+            // =================================================
+
+            Positioned(
+              left: 20,
+              bottom: 90,
+              child: FloatingActionButton.extended(
+                heroTag: 'create_session_button',
+                onPressed: _createSession,
+                backgroundColor: AppColors.mintGreen,
+                foregroundColor: AppColors.white,
+                elevation: 5,
+                icon: const Icon(
+                  Icons.add,
+                ),
+                label: const Text(
+                  'Tạo Session',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -338,10 +336,8 @@ class _SessionTabState extends State<SessionTab> {
   // =========================================================
 
   Widget _buildSessionContent({
-    required List<SessionModel>
-        sessions,
-    required List<SessionModel>
-        filteredSessions,
+    required List<SessionModel> sessions,
+    required List<SessionModel> filteredSessions,
   }) {
     // =========================================================
     // NO SESSION AT ALL
@@ -367,50 +363,33 @@ class _SessionTabState extends State<SessionTab> {
       key: const PageStorageKey(
         'mentor_session_list',
       ),
-
-      padding:
-          const EdgeInsets.only(
+      padding: const EdgeInsets.only(
         top: 0,
-        bottom: 100,
+        left: 12,
+        right: 12,
+
+        // Chừa khoảng trống phía dưới
+        // để không bị navbar / nút Create đè
+        bottom: 180,
       ),
-
-      itemCount:
-          filteredSessions.length,
-
-      itemBuilder:
-          (context, index) {
-        final session =
-            filteredSessions[index];
+      itemCount: filteredSessions.length,
+      itemBuilder: (
+        context,
+        index,
+      ) {
+        final session = filteredSessions[index];
 
         return SessionCard(
-          title:
-              session.title,
-
-          description:
-              session.description,
-
-          date:
-              session.date,
-
-          startTime:
-              session.startTime,
-
-          endTime:
-              session.endTime,
-
-          bookedSlots:
-              session.bookedSlots,
-
-          maxSlots:
-              session.maxSlots,
-
-          status:
-              session.status,
-
+          title: session.title,
+          description: session.description,
+          date: session.date,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          bookedSlots: session.bookedSlots,
+          maxSlots: session.maxSlots,
+          status: session.status,
           onTap: () {
-            _openSessionDetail(
-              session,
-            );
+            _openSessionDetail(session);
           },
         );
       },
@@ -424,32 +403,24 @@ class _SessionTabState extends State<SessionTab> {
   Widget _buildNoSearchResult() {
     return Center(
       child: Padding(
-        padding:
-            const EdgeInsets.all(
-          30,
-        ),
+        padding: const EdgeInsets.all(30),
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // =================================================
+            // ICON
+            // =================================================
+
             Container(
-              padding:
-                  const EdgeInsets.all(
-                20,
-              ),
-              decoration:
-                  BoxDecoration(
-                color: Colors.grey
-                    .withOpacity(
-                  0.1,
-                ),
-                shape:
-                    BoxShape.circle,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.65),
+                shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.search_off,
                 size: 50,
-                color: Colors.grey,
+                color: AppColors.gray,
               ),
             ),
 
@@ -457,12 +428,16 @@ class _SessionTabState extends State<SessionTab> {
               height: 16,
             ),
 
+            // =================================================
+            // TITLE
+            // =================================================
+
             const Text(
               'Không tìm thấy Session',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight:
-                    FontWeight.bold,
+                fontWeight: FontWeight.bold,
+                color: AppColors.titleText,
               ),
             ),
 
@@ -470,15 +445,17 @@ class _SessionTabState extends State<SessionTab> {
               height: 8,
             ),
 
+            // =================================================
+            // DESCRIPTION
+            // =================================================
+
             Text(
               _searchText.isNotEmpty
                   ? 'Không có Session nào phù hợp với "$_searchText".'
                   : 'Không có Session nào phù hợp với bộ lọc hiện tại.',
-              textAlign:
-                  TextAlign.center,
-              style:
-                  const TextStyle(
-                color: Colors.grey,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.gray,
               ),
             ),
 
@@ -486,16 +463,25 @@ class _SessionTabState extends State<SessionTab> {
               height: 20,
             ),
 
+            // =================================================
+            // RESET
+            // =================================================
+
             OutlinedButton.icon(
               onPressed: () {
                 _searchController.clear();
 
                 setState(() {
                   _searchText = '';
-                  _selectedFilter =
-                      'all';
+                  _selectedFilter = 'all';
                 });
               },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.deepGreen,
+                side: const BorderSide(
+                  color: AppColors.mintGreen,
+                ),
+              ),
               icon: const Icon(
                 Icons.refresh,
               ),
@@ -509,4 +495,3 @@ class _SessionTabState extends State<SessionTab> {
     );
   }
 }
-

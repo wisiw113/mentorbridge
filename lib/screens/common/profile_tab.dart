@@ -229,12 +229,23 @@ class _ProfileTabState extends State<ProfileTab> {
       context: context,
       builder: (_) {
         return AlertDialog(
+          backgroundColor:
+              AppColors.dialogBackground,
           title: const Text(
             "Xác nhận ảnh đại diện",
+            style: TextStyle(
+              color: AppColors.titleText,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          content: Image.memory(
-            bytes,
-            height: 200,
+          content: ClipRRect(
+            borderRadius:
+                BorderRadius.circular(12),
+            child: Image.memory(
+              bytes,
+              height: 200,
+              fit: BoxFit.cover,
+            ),
           ),
           actions: [
             TextButton(
@@ -244,7 +255,12 @@ class _ProfileTabState extends State<ProfileTab> {
                   false,
                 );
               },
-              child: const Text("Hủy"),
+              child: const Text(
+                "Hủy",
+                style: TextStyle(
+                  color: AppColors.gray,
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -253,7 +269,16 @@ class _ProfileTabState extends State<ProfileTab> {
                   true,
                 );
               },
-              child: const Text("Xác nhận"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    AppColors.mintGreen,
+              ),
+              child: const Text(
+                "Xác nhận",
+                style: TextStyle(
+                  color: AppColors.white,
+                ),
+              ),
             ),
           ],
         );
@@ -285,10 +310,6 @@ class _ProfileTabState extends State<ProfileTab> {
       // =====================================================
       // 2. UPDATE PHOTO URL
       // =====================================================
-      //
-      // ProfileTab chỉ gọi service.
-      // Không tự xử lý dữ liệu liên quan.
-      //
 
       await _profileService.updatePhotoURL(
         uid: uid,
@@ -353,20 +374,6 @@ class _ProfileTabState extends State<ProfileTab> {
             newBio,
           ) async {
             try {
-              // =================================================
-              // UPDATE PROFILE + SYNC DATA
-              // =================================================
-              //
-              // Tất cả logic đồng bộ:
-              //
-              // users
-              // appointments
-              // sessions
-              // session_ratings
-              //
-              // nằm trong UserProfileService.
-              //
-
               await _profileService.updateProfile(
                 uid: uid,
                 name: newName,
@@ -443,100 +450,113 @@ class _ProfileTabState extends State<ProfileTab> {
 
   @override
   Widget build(BuildContext context) {
+    // =======================================================
+    // LOADING
+    // =======================================================
+
     if (isLoading) {
       return const Scaffold(
         body: Center(
-          child:
-              CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: AppColors.mintGreen,
+          ),
         ),
       );
     }
 
+    // =======================================================
+    // PROFILE SCREEN
+    // DÙNG BACKGROUND GRADIENT CỦA APP
+    // =======================================================
+
     return Scaffold(
-      backgroundColor:
-          AppColors.softMint,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
 
-      body: SafeArea(
-        child:
-            SingleChildScrollView(
-          padding:
-              const EdgeInsets.only(
-            bottom: 110,
-          ),
+        decoration: const BoxDecoration(
+          gradient:
+              AppColors.backgroundGradient,
+        ),
 
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 25,
-              ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(
+              bottom: 110,
+            ),
 
-              // =================================================
-              // AVATAR
-              // =================================================
+            child: Column(
+              children: [
+                const SizedBox(
+                  height: 25,
+                ),
 
-              ProfileAvatar(
-                name: name,
-                photoURL: photoURL,
-                isUploading:
-                    isUploading,
-                onCameraTap:
-                    pickAndUploadImage,
-              ),
+                // =================================================
+                // AVATAR
+                // =================================================
 
-              const SizedBox(
-                height: 12,
-              ),
+                ProfileAvatar(
+                  name: name,
+                  photoURL: photoURL,
+                  isUploading:
+                      isUploading,
+                  onCameraTap:
+                      pickAndUploadImage,
+                ),
 
-              // =================================================
-              // HEADER
-              // =================================================
+                const SizedBox(
+                  height: 12,
+                ),
 
-              ProfileHeader(
-                name: name,
-                email: email,
-              ),
+                // =================================================
+                // HEADER
+                // =================================================
 
-              const SizedBox(
-                height: 25,
-              ),
+                ProfileHeader(
+                  name: name,
+                  email: email,
+                ),
 
-              // =================================================
-              // STATS
-              // =================================================
+                const SizedBox(
+                  height: 25,
+                ),
 
-              ProfileStats(
-                role: role,
-                birthYear:
-                    birthYear,
-                gender:
-                    gender,
-              ),
+                // =================================================
+                // STATS
+                // =================================================
 
-              const SizedBox(
-                height: 25,
-              ),
+                ProfileStats(
+                  role: role,
+                  birthYear: birthYear,
+                  gender: gender,
+                ),
 
-              // =================================================
-              // PROFILE INFO
-              // =================================================
+                const SizedBox(
+                  height: 25,
+                ),
 
-              _buildProfileInfo(),
+                // =================================================
+                // PROFILE INFO
+                // =================================================
 
-              const SizedBox(
-                height: 25,
-              ),
+                _buildProfileInfo(),
 
-              // =================================================
-              // ACTION BUTTONS
-              // =================================================
+                const SizedBox(
+                  height: 25,
+                ),
 
-              ProfileActionButtons(
-                onEdit:
-                    editProfileDialog,
-                onLogout:
-                    logout,
-              ),
-            ],
+                // =================================================
+                // ACTION BUTTONS
+                // =================================================
+
+                ProfileActionButtons(
+                  onEdit:
+                      editProfileDialog,
+                  onLogout:
+                      logout,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -561,7 +581,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
       decoration: BoxDecoration(
         color:
-            AppColors.white,
+            AppColors.cardBackground,
 
         borderRadius:
             BorderRadius.circular(18),
@@ -570,6 +590,14 @@ class _ProfileTabState extends State<ProfileTab> {
           color:
               AppColors.border,
         ),
+
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
 
       child: Column(
@@ -649,8 +677,7 @@ class _ProfileTabState extends State<ProfileTab> {
           Expanded(
             child: Column(
               crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+                  CrossAxisAlignment.start,
 
               children: [
                 Text(

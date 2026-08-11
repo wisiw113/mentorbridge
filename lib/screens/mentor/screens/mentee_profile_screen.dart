@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -36,7 +37,6 @@ class _MenteeProfileScreenState
   // =========================================================
 
   bool _isLoading = true;
-
   bool _isOpeningChat = false;
 
   Map<String, dynamic>? _userData;
@@ -210,21 +210,6 @@ class _MenteeProfileScreenState
         context,
         MaterialPageRoute(
           builder: (context) => ChatScreen(
-            // =================================================
-            // LƯU Ý
-            // =================================================
-            //
-            // ChatScreen hiện tại của bạn đang được thiết kế
-            // theo hướng:
-            //
-            // Mentee -> Mentor
-            //
-            // nên phần này sẽ cần sửa ChatScreen để hỗ trợ:
-            //
-            // Mentor -> Mentee
-            //
-            // Tạm thời truyền Mentee như "đối tượng chat".
-            //
             mentorId: widget.menteeId,
             mentorName: _menteeName,
           ),
@@ -243,6 +228,7 @@ class _MenteeProfileScreenState
           content: Text(
             'Không thể mở cuộc trò chuyện: $e',
           ),
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -270,11 +256,17 @@ class _MenteeProfileScreenState
 
       appBar: AppBar(
         title: const Text(
-          'Mentee Profile',
+          'Hồ sơ Mentee',
+          style: TextStyle(
+            color: AppColors.titleText,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor:
+            AppColors.cardBackground,
+        foregroundColor:
+            AppColors.titleText,
         elevation: 0,
       ),
 
@@ -337,6 +329,7 @@ class _MenteeProfileScreenState
                   _isOpeningChat
                       ? null
                       : _openChat,
+
               icon: _isOpeningChat
                   ? const SizedBox(
                       width: 20,
@@ -344,28 +337,34 @@ class _MenteeProfileScreenState
                       child:
                           CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: AppColors.white,
                       ),
                     )
                   : const Icon(
                       Icons.chat_bubble_outline,
                     ),
+
               label: Text(
                 _isOpeningChat
                     ? 'Đang mở chat...'
                     : 'Nhắn tin với Mentee',
               ),
+
               style:
                   ElevatedButton.styleFrom(
                 backgroundColor:
                     AppColors.mintGreen,
                 foregroundColor:
-                    Colors.white,
+                    AppColors.white,
+
                 disabledBackgroundColor:
-                    Colors.grey.shade300,
+                    AppColors.disabledText,
+
                 disabledForegroundColor:
-                    Colors.grey.shade600,
+                    AppColors.gray,
+
                 elevation: 0,
+
                 shape:
                     RoundedRectangleBorder(
                   borderRadius:
@@ -386,22 +385,23 @@ class _MenteeProfileScreenState
   Widget _buildProfileHeader() {
     return Container(
       width: double.infinity,
-      padding:
-          const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
+
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
+
         borderRadius:
             BorderRadius.circular(20),
-        boxShadow: [
+
+        boxShadow: const [
           BoxShadow(
-            color:
-                Colors.black.withOpacity(0.05),
+            color: AppColors.shadow,
             blurRadius: 10,
-            offset:
-                const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
+
       child: Column(
         children: [
           // =================================================
@@ -410,14 +410,17 @@ class _MenteeProfileScreenState
 
           CircleAvatar(
             radius: 48,
+
             backgroundColor:
                 AppColors.lightMint,
+
             backgroundImage:
                 _photoURL != null
                     ? NetworkImage(
                         _photoURL!,
                       )
                     : null,
+
             child: _photoURL == null
                 ? const Icon(
                     Icons.person_outline,
@@ -437,11 +440,10 @@ class _MenteeProfileScreenState
           Text(
             _menteeName,
             textAlign: TextAlign.center,
-            style:
-                const TextStyle(
+            style: const TextStyle(
               fontSize: 22,
-              fontWeight:
-                  FontWeight.bold,
+              fontWeight: FontWeight.bold,
+              color: AppColors.titleText,
             ),
           ),
 
@@ -455,22 +457,22 @@ class _MenteeProfileScreenState
             mainAxisAlignment:
                 MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.email_outlined,
                 size: 16,
-                color:
-                    Colors.grey.shade600,
+                color: AppColors.gray,
               ),
+
               const SizedBox(width: 6),
+
               Flexible(
                 child: Text(
                   _email,
                   textAlign:
                       TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    color:
-                        Colors.grey.shade600,
+                    color: AppColors.gray,
                   ),
                 ),
               ),
@@ -488,49 +490,52 @@ class _MenteeProfileScreenState
   Widget _buildInfoCard() {
     return Container(
       width: double.infinity,
-      padding:
-          const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(18),
+
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
+
         borderRadius:
             BorderRadius.circular(16),
-        boxShadow: [
+
+        boxShadow: const [
           BoxShadow(
-            color:
-                Colors.black.withOpacity(0.04),
+            color: AppColors.shadow,
             blurRadius: 8,
-            offset:
-                const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
+
       child: Column(
         crossAxisAlignment:
             CrossAxisAlignment.start,
+
         children: [
           const Text(
             'Thông tin cá nhân',
             style: TextStyle(
               fontSize: 17,
-              fontWeight:
-                  FontWeight.bold,
+              fontWeight: FontWeight.bold,
+              color: AppColors.titleText,
             ),
           ),
 
           const SizedBox(height: 16),
 
           _buildInfoRow(
-            icon:
-                Icons.person_outline,
+            icon: Icons.person_outline,
             label: 'Giới tính',
             value: _gender,
           ),
 
-          const Divider(height: 24),
+          const Divider(
+            height: 24,
+            color: AppColors.divider,
+          ),
 
           _buildInfoRow(
-            icon:
-                Icons.cake_outlined,
+            icon: Icons.cake_outlined,
             label: 'Năm sinh',
             value: _birthYear,
           ),
@@ -546,32 +551,34 @@ class _MenteeProfileScreenState
   Widget _buildBioCard() {
     return Container(
       width: double.infinity,
-      padding:
-          const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(18),
+
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
+
         borderRadius:
             BorderRadius.circular(16),
-        boxShadow: [
+
+        boxShadow: const [
           BoxShadow(
-            color:
-                Colors.black.withOpacity(0.04),
+            color: AppColors.shadow,
             blurRadius: 8,
-            offset:
-                const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),
+
       child: Column(
         crossAxisAlignment:
             CrossAxisAlignment.start,
+
         children: [
           const Text(
             'Giới thiệu',
             style: TextStyle(
               fontSize: 17,
-              fontWeight:
-                  FontWeight.bold,
+              fontWeight: FontWeight.bold,
+              color: AppColors.titleText,
             ),
           ),
 
@@ -579,10 +586,9 @@ class _MenteeProfileScreenState
 
           Text(
             _bio,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color:
-                  Colors.grey.shade700,
+              color: AppColors.gray,
               height: 1.5,
             ),
           ),
@@ -603,21 +609,23 @@ class _MenteeProfileScreenState
     return Row(
       crossAxisAlignment:
           CrossAxisAlignment.start,
+
       children: [
         Container(
           width: 38,
           height: 38,
+
           decoration: BoxDecoration(
-            color:
-                AppColors.lightMint,
+            color: AppColors.lightMint,
+
             borderRadius:
                 BorderRadius.circular(10),
           ),
+
           child: Icon(
             icon,
             size: 20,
-            color:
-                AppColors.deepGreen,
+            color: AppColors.deepGreen,
           ),
         ),
 
@@ -627,13 +635,13 @@ class _MenteeProfileScreenState
           child: Column(
             crossAxisAlignment:
                 CrossAxisAlignment.start,
+
             children: [
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  color:
-                      Colors.grey.shade600,
+                  color: AppColors.gray,
                 ),
               ),
 
@@ -641,11 +649,12 @@ class _MenteeProfileScreenState
 
               Text(
                 value,
-                style:
-                    const TextStyle(
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight:
                       FontWeight.w600,
+                  color:
+                      AppColors.darkGray,
                 ),
               ),
             ],
@@ -655,3 +664,4 @@ class _MenteeProfileScreenState
     );
   }
 }
+

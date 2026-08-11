@@ -1,3 +1,4 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -22,8 +23,7 @@ class RequestsTab extends StatefulWidget {
       _RequestsTabState();
 }
 
-class _RequestsTabState
-    extends State<RequestsTab> {
+class _RequestsTabState extends State<RequestsTab> {
   final AppointmentService _service =
       AppointmentService();
 
@@ -39,8 +39,7 @@ class _RequestsTabState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            AppointmentDetailScreen(
+        builder: (_) => AppointmentDetailScreen(
           appointment: appointment,
         ),
       ),
@@ -62,7 +61,9 @@ class _RequestsTabState
 
     if (user == null) {
       return Container(
-        color: AppColors.lightMint,
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
         child: const Center(
           child: Text(
             "Chưa đăng nhập",
@@ -78,10 +79,11 @@ class _RequestsTabState
     // REQUEST LIST
     // =======================================================
 
-    return ColoredBox(
-      color: AppColors.lightMint,
-      child: StreamBuilder<
-          List<AppointmentModel>>(
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.backgroundGradient,
+      ),
+      child: StreamBuilder<List<AppointmentModel>>(
         stream: _service.getMentorAppointments(
           user.uid,
         ),
@@ -96,8 +98,7 @@ class _RequestsTabState
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
-              child:
-                  CircularProgressIndicator(
+              child: CircularProgressIndicator(
                 color: AppColors.mintGreen,
               ),
             );
@@ -142,7 +143,9 @@ class _RequestsTabState
 
           return Column(
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(
+                height: 16,
+              ),
 
               // =================================================
               // STATUS FILTER
@@ -159,7 +162,9 @@ class _RequestsTabState
                 },
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(
+                height: 20,
+              ),
 
               // =================================================
               // APPOINTMENT LIST
@@ -167,13 +172,12 @@ class _RequestsTabState
 
               Expanded(
                 child:
-                    filteredAppointments
-                            .isEmpty
+                    filteredAppointments.isEmpty
                         ? const AppointmentEmptyState()
                         : ListView.separated(
                             padding:
                                 const EdgeInsets.only(
-                              bottom: 24,
+                              bottom: 100,
                             ),
                             itemCount:
                                 filteredAppointments
@@ -196,9 +200,9 @@ class _RequestsTabState
                                       .status
                                       .toLowerCase();
 
-                              // =================================================
+                              // =================================
                               // CHECK CAN COMPLETE
-                              // =================================================
+                              // =================================
 
                               final canComplete =
                                   status ==
@@ -207,9 +211,9 @@ class _RequestsTabState
                                         appointment,
                                       );
 
-                              // =================================================
+                              // =================================
                               // APPOINTMENT CARD
-                              // =================================================
+                              // =================================
 
                               return InkWell(
                                 borderRadius:
@@ -218,10 +222,9 @@ class _RequestsTabState
                                   16,
                                 ),
 
-                                // =================================================
-                                // BẤM CARD
-                                // MỞ APPOINTMENT DETAIL
-                                // =================================================
+                                // =================================
+                                // OPEN DETAIL
+                                // =================================
 
                                 onTap: () {
                                   _openAppointmentDetail(
@@ -234,17 +237,9 @@ class _RequestsTabState
                                   appointment:
                                       appointment,
 
-                                  // =================================================
-                                  // KHÔNG CÒN onMenteeTap
-                                  //
-                                  // AppointmentRequestCard
-                                  // tự mở MenteeProfileScreen
-                                  // khi bấm avatar.
-                                  // =================================================
-
-                                  // =================================================
+                                  // =================================
                                   // ACCEPT
-                                  // =================================================
+                                  // =================================
 
                                   onAccept:
                                       status ==
@@ -256,9 +251,9 @@ class _RequestsTabState
                                               )
                                           : null,
 
-                                  // =================================================
+                                  // =================================
                                   // REJECT
-                                  // =================================================
+                                  // =================================
 
                                   onReject:
                                       status ==
@@ -270,16 +265,16 @@ class _RequestsTabState
                                               )
                                           : null,
 
-                                  // =================================================
+                                  // =================================
                                   // CAN COMPLETE
-                                  // =================================================
+                                  // =================================
 
                                   canComplete:
                                       canComplete,
 
-                                  // =================================================
+                                  // =================================
                                   // COMPLETE
-                                  // =================================================
+                                  // =================================
 
                                   onComplete:
                                       canComplete
@@ -312,7 +307,8 @@ class _RequestsTabState
         await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
+      backgroundColor:
+          AppColors.white,
       shape:
           const RoundedRectangleBorder(
         borderRadius:
@@ -416,8 +412,6 @@ class _RequestsTabState
   // UPDATE STATUS
   // =========================================================
   //
-  // AppointmentService hiện tại:
-  //
   // accepted  -> acceptAppointment()
   // completed -> completeAppointment()
   //
@@ -508,3 +502,4 @@ class _RequestsTabState
     }
   }
 }
+

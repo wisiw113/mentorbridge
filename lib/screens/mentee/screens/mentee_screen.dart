@@ -9,6 +9,7 @@ import '../../common/profile_tab.dart';
 import '../../../widgets/common/custom_bottom_navbar.dart';
 import '../../../widgets/chat/floating_chat_button.dart';
 import '../../../widgets/notification/notification_bell.dart';
+
 import '../../common/notification_screen.dart';
 import '../../chat/chat_list_screen.dart';
 
@@ -18,12 +19,10 @@ class MenteeScreen extends StatefulWidget {
   });
 
   @override
-  State<MenteeScreen> createState() =>
-      _MenteeScreenState();
+  State<MenteeScreen> createState() => _MenteeScreenState();
 }
 
-class _MenteeScreenState
-    extends State<MenteeScreen> {
+class _MenteeScreenState extends State<MenteeScreen> {
   int currentIndex = 0;
 
   late final List<Widget> pages = [
@@ -34,9 +33,7 @@ class _MenteeScreenState
   ];
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
@@ -57,11 +54,9 @@ class _MenteeScreenState
 
           Positioned(
             right: 20,
-            bottom: 140,
+            bottom: 160,
             child: NotificationBell(
               onTap: () {
-                // TODO:
-                // Mở màn hình NotificationScreen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -78,15 +73,14 @@ class _MenteeScreenState
 
           Positioned(
             right: 20,
-            bottom: 85,
+            bottom: 95,
             child: FloatingChatButton(
               unreadCount: 0,
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        ChatListScreen(
+                    builder: (_) => ChatListScreen(
                       isMentor: false,
                     ),
                   ),

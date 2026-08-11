@@ -22,9 +22,9 @@ class _MenteeSessionTabState
   final SessionService _sessionService =
       SessionService();
 
-  // =========================
+  // =========================================================
   // SẮP XẾP MẶC ĐỊNH
-  // =========================
+  // =========================================================
 
   String selectedSort = 'nearest';
 
@@ -33,18 +33,38 @@ class _MenteeSessionTabState
     final user =
         FirebaseAuth.instance.currentUser;
 
+    // =========================================================
+    // CHƯA ĐĂNG NHẬP
+    // =========================================================
+
     if (user == null) {
-      return const Center(
-        child: Text("Chưa đăng nhập"),
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: const Center(
+          child: Text(
+            'Chưa đăng nhập',
+            style: TextStyle(
+              color: AppColors.deepGreen,
+            ),
+          ),
+        ),
       );
     }
 
     return Container(
-      color: AppColors.lightMint,
+      decoration: const BoxDecoration(
+        gradient: AppColors.backgroundGradient,
+      ),
       child: StreamBuilder<List<SessionModel>>(
         stream: _sessionService
             .getMenteeSessions(user.uid),
         builder: (context, snapshot) {
+          // ===================================================
+          // ĐANG TẢI
+          // ===================================================
+
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
@@ -54,12 +74,19 @@ class _MenteeSessionTabState
             );
           }
 
+          // ===================================================
+          // LỖI
+          // ===================================================
+
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                "Không thể tải buổi học.\n"
-                "${snapshot.error}",
+                'Không thể tải buổi học.\n'
+                '${snapshot.error}',
                 textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.error,
+                ),
               ),
             );
           }
@@ -69,10 +96,14 @@ class _MenteeSessionTabState
             snapshot.data ?? [],
           );
 
+          // ===================================================
+          // KHÔNG CÓ SESSION
+          // ===================================================
+
           if (sessions.isEmpty) {
             return const Center(
               child: Text(
-                "Bạn chưa tham gia buổi học nào.",
+                'Bạn chưa tham gia buổi học nào.',
                 style: TextStyle(
                   color: AppColors.gray,
                 ),
@@ -80,9 +111,9 @@ class _MenteeSessionTabState
             );
           }
 
-          // =========================
-          // SẮP XẾP THEO NGÀY
-          // =========================
+          // ===================================================
+          // SẮP XẾP
+          // ===================================================
 
           sessions.sort((a, b) {
             final dateA = _parseDate(a.date);
@@ -95,11 +126,15 @@ class _MenteeSessionTabState
             return dateB.compareTo(dateA);
           });
 
+          // ===================================================
+          // GIAO DIỆN
+          // ===================================================
+
           return Column(
             children: [
-              // =========================
+              // =================================================
               // THANH SẮP XẾP
-              // =========================
+              // =================================================
 
               FilterSessionBar(
                 selectedSort: selectedSort,
@@ -110,9 +145,9 @@ class _MenteeSessionTabState
                 },
               ),
 
-              // =========================
+              // =================================================
               // DANH SÁCH SESSION
-              // =========================
+              // =================================================
 
               Expanded(
                 child: ListView.separated(
@@ -123,7 +158,10 @@ class _MenteeSessionTabState
                   itemCount: sessions.length,
                   separatorBuilder: (_, __) =>
                       const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
+                  itemBuilder: (
+                    context,
+                    index,
+                  ) {
                     final session =
                         sessions[index];
 
@@ -143,6 +181,10 @@ class _MenteeSessionTabState
                       status:
                           session.status,
 
+                      // =================================================
+                      // MỞ CHI TIẾT
+                      // =================================================
+
                       onTap: () {
                         Navigator.push(
                           context,
@@ -155,7 +197,8 @@ class _MenteeSessionTabState
                         );
                       },
 
-                      // Đã tham gia rồi nên không hiện nút tham gia
+                      // Đã tham gia rồi
+                      // nên không hiển thị nút tham gia
                       onJoin: null,
                     );
                   },
@@ -168,12 +211,12 @@ class _MenteeSessionTabState
     );
   }
 
-  // =========================
-  // CHUYỂN NGÀY TỪ STRING
-  // =========================
+  // =========================================================
+  // CHUYỂN NGÀY TỪ CHUỖI
+  // =========================================================
 
   DateTime _parseDate(String date) {
-    final parts = date.split("-");
+    final parts = date.split('-');
 
     if (parts.length != 3) {
       return DateTime(9999);

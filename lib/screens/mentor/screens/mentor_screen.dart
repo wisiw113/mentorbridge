@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../tabs/home_tab.dart';
@@ -27,13 +26,10 @@ class MentorScreen extends StatefulWidget {
   });
 
   @override
-  State<MentorScreen> createState() =>
-      _MentorScreenState();
+  State<MentorScreen> createState() => _MentorScreenState();
 }
 
-class _MentorScreenState
-    extends State<MentorScreen> {
-
+class _MentorScreenState extends State<MentorScreen> {
   int currentIndex = 0;
 
   late final List<Widget> pages = [
@@ -72,13 +68,10 @@ class _MentorScreenState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-
           // ===================================================
           // CONTENT
           // ===================================================
@@ -96,7 +89,7 @@ class _MentorScreenState
 
           Positioned(
             right: 20,
-            bottom: 145,
+            bottom: 160,
             child: NotificationBell(
               onTap: _openNotifications,
             ),
@@ -108,7 +101,7 @@ class _MentorScreenState
 
           Positioned(
             right: 20,
-            bottom: 90,
+            bottom: 95,
             child: FloatingChatButton(
               onPressed: _openChat,
               unreadCount: 0,
@@ -137,4 +130,3 @@ class _MentorScreenState
     );
   }
 }
-

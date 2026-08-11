@@ -67,7 +67,7 @@ class _SessionSearchBarState
             TextInputAction.search,
 
         decoration: InputDecoration(
-          hintText: 'Search session...',
+          hintText: 'Tìm khóa học...',
           prefixIcon: const Icon(
             Icons.search,
           ),

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -8,7 +9,7 @@ class WaitingApprovalScreen extends StatelessWidget {
 
   Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
-    // AuthGate sẽ tự chuyển về LoginScreen
+    // AuthGate sẽ tự chuyển về màn hình đăng nhập
   }
 
   @override
@@ -18,11 +19,16 @@ class WaitingApprovalScreen extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // =================================================
                 // ICON
+                // =================================================
+
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -45,8 +51,12 @@ class WaitingApprovalScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
+                // =================================================
+                // TIÊU ĐỀ
+                // =================================================
+
                 const Text(
-                  "Waiting for Approval",
+                  "Đang chờ phê duyệt",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -56,9 +66,13 @@ class WaitingApprovalScreen extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
+                // =================================================
+                // MÔ TẢ
+                // =================================================
+
                 Text(
-                  "Your profile has been submitted successfully.\n"
-                  "Please wait while an administrator reviews your account.",
+                  "Hồ sơ của bạn đã được gửi thành công.\n"
+                  "Vui lòng chờ quản trị viên xét duyệt tài khoản.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.gray,
@@ -68,6 +82,10 @@ class WaitingApprovalScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 30),
+
+                // =================================================
+                // TRẠNG THÁI
+                // =================================================
 
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -88,7 +106,7 @@ class WaitingApprovalScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        "Status: Pending",
+                        "Trạng thái: Đang chờ",
                         style: TextStyle(
                           color: Colors.orange.shade700,
                           fontWeight: FontWeight.w600,
@@ -100,7 +118,10 @@ class WaitingApprovalScreen extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // THÔNG BÁO AUTO UPDATE
+                // =================================================
+                // THÔNG BÁO TỰ ĐỘNG CẬP NHẬT
+                // =================================================
+
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -109,7 +130,7 @@ class WaitingApprovalScreen extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            "Your account status updates automatically.",
+                            "Trạng thái tài khoản sẽ được cập nhật tự động.",
                           ),
                         ),
                       );
@@ -126,7 +147,7 @@ class WaitingApprovalScreen extends StatelessWidget {
                       color: Colors.white,
                     ),
                     label: const Text(
-                      "Auto Checking",
+                      "Tự động kiểm tra",
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -137,7 +158,10 @@ class WaitingApprovalScreen extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                // LOGOUT
+                // =================================================
+                // ĐĂNG XUẤT
+                // =================================================
+
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -158,7 +182,7 @@ class WaitingApprovalScreen extends StatelessWidget {
                       color: Colors.black87,
                     ),
                     label: const Text(
-                      "Logout",
+                      "Đăng xuất",
                       style: TextStyle(
                         color: Colors.black87,
                         fontWeight: FontWeight.w600,
@@ -174,3 +198,4 @@ class WaitingApprovalScreen extends StatelessWidget {
     );
   }
 }
+

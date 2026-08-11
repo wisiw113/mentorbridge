@@ -1,6 +1,7 @@
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/theme/app_colors.dart';
 import 'waitingApprovalScreen.dart';
@@ -30,11 +31,15 @@ class _CompleteProfileScreenState
 
   final int currentYear = DateTime.now().year;
 
-  late final List<int> birthYears =
-      List.generate(
+  late final List<int> birthYears = List.generate(
     currentYear - 1959,
     (i) => currentYear - 18 - i,
   );
+
+  // =========================================================
+  // CHUYÊN NGÀNH
+  // Giữ nguyên tiếng Anh
+  // =========================================================
 
   final List<String> majors = [
     "Information Technology",
@@ -52,12 +57,16 @@ class _CompleteProfileScreenState
     "Graphic Design",
   ];
 
+  // =========================================================
+  // NĂM HỌC
+  // =========================================================
+
   final List<String> studentYears = [
-    "Year 1",
-    "Year 2",
-    "Year 3",
-    "Year 4",
-    "Year 5+",
+    "Năm 1",
+    "Năm 2",
+    "Năm 3",
+    "Năm 4",
+    "Năm 5+",
   ];
 
   @override
@@ -71,7 +80,7 @@ class _CompleteProfileScreenState
             child: Column(
               children: [
                 const Text(
-                  "Complete Profile",
+                  "Hoàn thiện hồ sơ",
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -80,39 +89,69 @@ class _CompleteProfileScreenState
 
                 const SizedBox(height: 30),
 
+                // =================================================
+                // HỌ VÀ TÊN
+                // =================================================
+
                 _inputField(
                   controller: nameController,
-                  hint: "Full Name",
+                  hint: "Họ và tên",
                   icon: Icons.person_outline,
                 ),
 
                 const SizedBox(height: 16),
 
+                // =================================================
+                // VAI TRÒ
+                // =================================================
+
                 _roleBox(),
 
                 const SizedBox(height: 16),
+
+                // =================================================
+                // NĂM SINH
+                // =================================================
 
                 _dropdownBirthYear(),
 
                 const SizedBox(height: 16),
 
+                // =================================================
+                // CHUYÊN NGÀNH
+                // Giữ nguyên tiếng Anh
+                // =================================================
+
                 _dropdownMajor(),
 
                 const SizedBox(height: 16),
+
+                // =================================================
+                // NĂM HỌC
+                // =================================================
 
                 _dropdownStudentYear(),
 
                 const SizedBox(height: 16),
 
+                // =================================================
+                // GIỚI THIỆU
+                // Chỉ hiện với Mentor
+                // =================================================
+
                 if (role == "mentor")
                   _inputField(
                     controller: aboutController,
-                    hint: "About Me",
+                    hint: "Giới thiệu bản thân",
                     icon: Icons.info_outline,
                     maxLines: 4,
                   ),
 
                 const SizedBox(height: 30),
+
+                // =================================================
+                // NÚT TIẾP TỤC
+                // =================================================
 
                 SizedBox(
                   width: double.infinity,
@@ -120,8 +159,7 @@ class _CompleteProfileScreenState
                   child: ElevatedButton(
                     onPressed:
                         loading ? null : saveProfile,
-                    style:
-                        ElevatedButton.styleFrom(
+                    style: ElevatedButton.styleFrom(
                       backgroundColor:
                           AppColors.mintGreen,
                     ),
@@ -129,7 +167,9 @@ class _CompleteProfileScreenState
                         ? const CircularProgressIndicator(
                             color: Colors.white,
                           )
-                        : const Text("Continue"),
+                        : const Text(
+                            "Tiếp tục",
+                          ),
                   ),
                 ),
               ],
@@ -140,16 +180,24 @@ class _CompleteProfileScreenState
     );
   }
 
+  // =========================================================
+  // UID
+  // =========================================================
+
   String get uid {
     final user =
         FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      throw Exception("User not logged in");
+      throw Exception("Người dùng chưa đăng nhập");
     }
 
     return user.uid;
   }
+
+  // =========================================================
+  // SAVE PROFILE
+  // =========================================================
 
   Future<void> saveProfile() async {
     if (nameController.text.isEmpty ||
@@ -157,10 +205,11 @@ class _CompleteProfileScreenState
         birthYear == null ||
         selectedMajor == null ||
         studentYear == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Fill all fields"),
+          content: Text(
+            "Vui lòng điền đầy đủ thông tin",
+          ),
         ),
       );
       return;
@@ -174,14 +223,12 @@ class _CompleteProfileScreenState
           .doc(uid)
           .set(
         {
-          "name":
-              nameController.text.trim(),
+          "name": nameController.text.trim(),
           "role": role,
           "birthYear": birthYear,
           "major": selectedMajor,
           "studentYear": studentYear,
-          "bio":
-              aboutController.text.trim(),
+          "bio": aboutController.text.trim(),
           "status": "pending",
           "profileCompleted": true,
         },
@@ -199,24 +246,31 @@ class _CompleteProfileScreenState
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(
+              "Có lỗi xảy ra: $e",
+            ),
           ),
         );
       }
     }
 
-    setState(() => loading = false);
+    if (mounted) {
+      setState(() => loading = false);
+    }
   }
+
+  // =========================================================
+  // ROLE
+  // =========================================================
 
   Widget _roleBox() {
     return Container(
       color: Colors.white,
       child: Column(
         children: [
-          RadioListTile(
+          RadioListTile<String>(
             value: "mentor",
             groupValue: role,
             title: const Text("Mentor"),
@@ -226,7 +280,7 @@ class _CompleteProfileScreenState
               });
             },
           ),
-          RadioListTile(
+          RadioListTile<String>(
             value: "mentee",
             groupValue: role,
             title: const Text("Mentee"),
@@ -241,16 +295,22 @@ class _CompleteProfileScreenState
     );
   }
 
+  // =========================================================
+  // BIRTH YEAR
+  // =========================================================
+
   Widget _dropdownBirthYear() {
     return DropdownButton<int>(
       value: birthYear,
-      hint: const Text("Birth Year"),
+      hint: const Text("Năm sinh"),
       isExpanded: true,
       items: birthYears
           .map(
-            (e) => DropdownMenuItem(
+            (e) => DropdownMenuItem<int>(
               value: e,
-              child: Text(e.toString()),
+              child: Text(
+                e.toString(),
+              ),
             ),
           )
           .toList(),
@@ -261,14 +321,20 @@ class _CompleteProfileScreenState
       },
     );
   }
-    Widget _dropdownMajor() {
+
+  // =========================================================
+  // MAJOR
+  // Giữ nguyên tiếng Anh
+  // =========================================================
+
+  Widget _dropdownMajor() {
     return DropdownButton<String>(
       value: selectedMajor,
-      hint: const Text("Major"),
+      hint: const Text("Chuyên ngành"),
       isExpanded: true,
       items: majors
           .map(
-            (e) => DropdownMenuItem(
+            (e) => DropdownMenuItem<String>(
               value: e,
               child: Text(e),
             ),
@@ -282,14 +348,18 @@ class _CompleteProfileScreenState
     );
   }
 
+  // =========================================================
+  // STUDENT YEAR
+  // =========================================================
+
   Widget _dropdownStudentYear() {
     return DropdownButton<String>(
       value: studentYear,
-      hint: const Text("Student Year"),
+      hint: const Text("Năm học"),
       isExpanded: true,
       items: studentYears
           .map(
-            (e) => DropdownMenuItem(
+            (e) => DropdownMenuItem<String>(
               value: e,
               child: Text(e),
             ),
@@ -303,6 +373,10 @@ class _CompleteProfileScreenState
     );
   }
 
+  // =========================================================
+  // INPUT FIELD
+  // =========================================================
+
   Widget _inputField({
     required TextEditingController controller,
     required String hint,
@@ -315,8 +389,7 @@ class _CompleteProfileScreenState
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: controller,
@@ -349,3 +422,4 @@ class _CompleteProfileScreenState
     super.dispose();
   }
 }
+

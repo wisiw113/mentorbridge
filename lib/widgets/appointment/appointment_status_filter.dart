@@ -1,8 +1,9 @@
+
 import 'package:flutter/material.dart';
 
 class AppointmentStatusFilter extends StatelessWidget {
-  final String selectedStatus;
   final ValueChanged<String> onChanged;
+  final String selectedStatus;
 
   const AppointmentStatusFilter({
     super.key,
@@ -24,13 +25,13 @@ class AppointmentStatusFilter extends StatelessWidget {
   ];
 
   // =========================================================
-  // TÊN HIỂN THỊ
+  // TÊN HIỂN THỊ TIẾNG VIỆT
   // =========================================================
 
   String _getLabel(String status) {
     switch (status) {
       case 'pending':
-        return 'Đang chờ';
+        return 'Chờ duyệt';
 
       case 'accepted':
         return 'Đã chấp nhận';
@@ -123,10 +124,7 @@ class AppointmentStatusFilter extends StatelessWidget {
             width: 8,
           );
         },
-        itemBuilder: (
-          context,
-          index,
-        ) {
+        itemBuilder: (context, index) {
           final status = statuses[index];
 
           final isSelected =
@@ -202,8 +200,7 @@ class AppointmentStatusFilter extends StatelessWidget {
                   ? Colors.white
                   : Colors.black87,
               fontSize: 13,
-              fontWeight:
-                  FontWeight.w600,
+              fontWeight: FontWeight.w600,
             ),
 
             // =================================================
@@ -221,3 +218,4 @@ class AppointmentStatusFilter extends StatelessWidget {
     );
   }
 }
+
