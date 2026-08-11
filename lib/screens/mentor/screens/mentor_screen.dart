@@ -89,7 +89,7 @@ class _MentorScreenState extends State<MentorScreen> {
 
           Positioned(
             right: 20,
-            bottom: 160,
+            bottom: 220,
             child: NotificationBell(
               onTap: _openNotifications,
             ),
@@ -101,7 +101,7 @@ class _MentorScreenState extends State<MentorScreen> {
 
           Positioned(
             right: 20,
-            bottom: 95,
+            bottom: 145,
             child: FloatingChatButton(
               onPressed: _openChat,
               unreadCount: 0,
@@ -110,6 +110,7 @@ class _MentorScreenState extends State<MentorScreen> {
 
           // ===================================================
           // FLOATING BOTTOM NAVBAR
+          // KHÔNG SỬA
           // ===================================================
 
           Positioned(

@@ -17,29 +17,52 @@ class FloatingChatButton extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Material(
-          color: Colors.transparent,
-          elevation: 6,
-          shadowColor: Colors.black26,
-          shape: const CircleBorder(),
-          child: InkWell(
-            onTap: onPressed,
-            customBorder: const CircleBorder(),
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: const BoxDecoration(
-                color: AppColors.mintGreen,
-                shape: BoxShape.circle,
+        // =====================================================
+        // CHAT BUTTON
+        // =====================================================
+
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+
+            // VIỀN ĐEN
+            border: Border.all(
+              color: Colors.black,
+              width: 1.2,
+            ),
+
+            // SHADOW
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 3),
               ),
-              child: const Icon(
-                Icons.chat_bubble_rounded,
-                color: Colors.white,
-                size: 28,
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(14),
+              child: const Center(
+                child: Icon(
+                  Icons.chat_bubble_rounded,
+                  color: AppColors.deepGreen,
+                  size: 26,
+                ),
               ),
             ),
           ),
         ),
+
+        // =====================================================
+        // UNREAD BADGE
+        // =====================================================
 
         if (unreadCount > 0)
           Positioned(
@@ -55,17 +78,26 @@ class FloatingChatButton extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: AppColors.error,
-                borderRadius:
-                    BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
+
+                // VIỀN TRẮNG
                 border: Border.all(
                   color: Colors.white,
                   width: 2,
                 ),
+
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               alignment: Alignment.center,
               child: Text(
                 unreadCount > 99
-                    ? "99+"
+                    ? '99+'
                     : unreadCount.toString(),
                 style: const TextStyle(
                   color: Colors.white,

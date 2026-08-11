@@ -34,6 +34,9 @@ class _MenteeScreenState extends State<MenteeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Khoảng an toàn phía dưới của điện thoại
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -54,7 +57,10 @@ class _MenteeScreenState extends State<MenteeScreen> {
 
           Positioned(
             right: 20,
-            bottom: 160,
+
+            // Nâng lên cao hơn navbar
+            bottom: 185 + bottomSafeArea,
+
             child: NotificationBell(
               onTap: () {
                 Navigator.push(
@@ -73,7 +79,10 @@ class _MenteeScreenState extends State<MenteeScreen> {
 
           Positioned(
             right: 20,
-            bottom: 95,
+
+            // Nằm dưới chuông nhưng vẫn cách navbar
+            bottom: 120 + bottomSafeArea,
+
             child: FloatingChatButton(
               unreadCount: 0,
               onPressed: () {
@@ -91,6 +100,7 @@ class _MenteeScreenState extends State<MenteeScreen> {
 
           // ==========================================
           // FLOATING NAVBAR
+          // KHÔNG THAY ĐỔI
           // ==========================================
 
           Positioned(

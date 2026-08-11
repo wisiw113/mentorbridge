@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -71,17 +70,31 @@ class _EditProfilePopupState
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
+
+      // =====================================================
+      // TIÊU ĐỀ
+      // =====================================================
+
       title: const Text(
-        "Chỉnh sửa Profile",
+        "Chỉnh sửa hồ sơ",
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: AppColors.deepGreen,
         ),
       ),
+
+      // =====================================================
+      // NỘI DUNG
+      // =====================================================
+
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // =================================================
+            // TÊN
+            // =================================================
+
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
@@ -94,6 +107,10 @@ class _EditProfilePopupState
             ),
 
             const SizedBox(height: 14),
+
+            // =================================================
+            // NĂM SINH
+            // =================================================
 
             TextField(
               controller: birthController,
@@ -108,6 +125,10 @@ class _EditProfilePopupState
             ),
 
             const SizedBox(height: 18),
+
+            // =================================================
+            // GIỚI TÍNH
+            // =================================================
 
             Align(
               alignment: Alignment.centerLeft,
@@ -135,6 +156,7 @@ class _EditProfilePopupState
                     });
                   },
                 ),
+
                 ChoiceChip(
                   label: const Text("Nữ"),
                   selected: selectedGender == "Nữ",
@@ -145,6 +167,7 @@ class _EditProfilePopupState
                     });
                   },
                 ),
+
                 ChoiceChip(
                   label: const Text("Khác"),
                   selected: selectedGender == "Khác",
@@ -160,11 +183,15 @@ class _EditProfilePopupState
 
             const SizedBox(height: 18),
 
+            // =================================================
+            // GIỚI THIỆU
+            // =================================================
+
             TextField(
               controller: bioController,
               maxLines: 4,
               decoration: const InputDecoration(
-                labelText: "About Me",
+                labelText: "Giới thiệu",
                 prefixIcon: Icon(
                   Icons.info_outline,
                 ),
@@ -175,6 +202,11 @@ class _EditProfilePopupState
           ],
         ),
       ),
+
+      // =====================================================
+      // NÚT
+      // =====================================================
+
       actions: [
         TextButton(
           onPressed: () {
@@ -182,6 +214,7 @@ class _EditProfilePopupState
           },
           child: const Text("Hủy"),
         ),
+
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.deepGreen,

@@ -306,25 +306,25 @@ class _SessionTabState extends State<SessionTab> {
             // =================================================
 
             Positioned(
-              left: 20,
-              bottom: 90,
-              child: FloatingActionButton.extended(
-                heroTag: 'create_session_button',
-                onPressed: _createSession,
-                backgroundColor: AppColors.mintGreen,
-                foregroundColor: AppColors.white,
-                elevation: 5,
-                icon: const Icon(
-                  Icons.add,
-                ),
-                label: const Text(
-                  'Tạo Session',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
+  left: 20,
+  bottom: 82,
+  child: SafeArea(
+    child: FloatingActionButton.extended(
+      heroTag: 'create_session_button',
+      onPressed: _createSession,
+      backgroundColor: AppColors.mintGreen,
+      foregroundColor: AppColors.white,
+      elevation: 5,
+      icon: const Icon(Icons.add),
+      label: const Text(
+        'Tạo Session',
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  ),
+),
           ],
         ),
       ),

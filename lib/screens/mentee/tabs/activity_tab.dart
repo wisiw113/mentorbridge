@@ -36,10 +36,10 @@ class ActivityScreen extends StatelessWidget {
               indicatorColor: AppColors.mintGreen,
               tabs: [
                 Tab(
-                  text: "My appointments",
+                  text: "cuộc hẹn",
                 ),
                 Tab(
-                  text: "My Sessions",
+                  text: "Khóa học của tôi",
                 ),
               ],
             ),

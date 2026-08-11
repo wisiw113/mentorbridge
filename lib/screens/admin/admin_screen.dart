@@ -7,7 +7,7 @@ import '../../widgets/admin/admin_logout_button.dart';
 import 'tabs/admin_dashboard_tab.dart';
 import 'tabs/admin_user_management_screen.dart';
 import 'tabs/admin_activity_management_screen.dart';
-import 'tabs/profile_tab.dart';
+import 'tabs/admin_notification_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -23,14 +23,14 @@ class _AdminScreenState extends State<AdminScreen> {
     AdminDashboardTab(),
     AdminUserManagementScreen(),
     AdminActivityManagementScreen(),
-    ProfileTab(),
+    AdminNotificationScreen(),
   ];
 
   final List<String> titles = const [
     'Admin Dashboard',
     'User Management',
     'Activity Management',
-    'Profile',
+    'Notifications',
   ];
 
   @override
@@ -109,7 +109,7 @@ class _AdminScreenState extends State<AdminScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline_rounded),
             activeIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
+            label: 'notifications',
           ),
         ],
       ),

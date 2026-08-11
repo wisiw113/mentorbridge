@@ -9,34 +9,23 @@ import '../../../widgets/admin/admin_session_stat_card.dart';
 import '../../../widgets/admin/admin_pending_users_section.dart';
 
 class AdminDashboardTab extends StatelessWidget {
-  const AdminDashboardTab({super.key});
+  const AdminDashboardTab({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // =========================
+      // =========================================================
       // NỀN XANH MINT
-      // =========================
+      // =========================================================
 
       backgroundColor: AppColors.lightMint,
 
-      appBar: AppBar(
-        title: const Text("Dashboard"),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(
-          255,
-          228,
-          47,
-          47,
-        ),
-        foregroundColor: const Color.fromARGB(
-          255,
-          0,
-          0,
-          0,
-        ),
-        elevation: 0,
-      ),
+      // =========================================================
+      // BODY
+      // Không còn AppBar màu đỏ
+      // =========================================================
 
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -62,40 +51,52 @@ class AdminDashboardTab extends StatelessWidget {
           final users =
               userSnapshot.data?.docs ?? [];
 
-          // ================= USER STATISTICS =================
+          // =====================================================
+          // USER STATISTICS
+          // =====================================================
 
-          int totalUsers = users.length;
+          final int totalUsers = users.length;
 
-          int mentors = users.where((doc) {
+          final int mentors = users.where((doc) {
             final data =
                 doc.data() as Map<String, dynamic>;
 
-            return data["role"]?.toString().toLowerCase() ==
+            return data["role"]
+                    ?.toString()
+                    .toLowerCase() ==
                 "mentor";
           }).length;
 
-          int mentees = users.where((doc) {
+          final int mentees = users.where((doc) {
             final data =
                 doc.data() as Map<String, dynamic>;
 
-            return data["role"]?.toString().toLowerCase() ==
+            return data["role"]
+                    ?.toString()
+                    .toLowerCase() ==
                 "mentee";
           }).length;
 
-          int pendingApproval = users.where((doc) {
+          final int pendingApproval =
+              users.where((doc) {
             final data =
                 doc.data() as Map<String, dynamic>;
 
-            return data["status"]?.toString().toLowerCase() ==
+            return data["status"]
+                    ?.toString()
+                    .toLowerCase() ==
                 "pending";
           }).length;
 
-          // ================= PENDING USERS =================
+          // =====================================================
+          // PENDING USERS
+          // =====================================================
 
           final pendingUsers = users
               .where((doc) {
                 final data =
-                    doc.data() as Map<String, dynamic>;
+                    doc.data()
+                        as Map<String, dynamic>;
 
                 return data["status"]
                         ?.toString()
@@ -105,7 +106,8 @@ class AdminDashboardTab extends StatelessWidget {
               .take(5)
               .map((doc) {
                 final data =
-                    doc.data() as Map<String, dynamic>;
+                    doc.data()
+                        as Map<String, dynamic>;
 
                 return {
                   "uid": doc.id,
@@ -114,12 +116,19 @@ class AdminDashboardTab extends StatelessWidget {
               })
               .toList();
 
+          // =====================================================
+          // SESSION STREAM
+          // =====================================================
+
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection("sessions")
                 .snapshots(),
 
-            builder: (context, sessionSnapshot) {
+            builder: (
+              context,
+              sessionSnapshot,
+            ) {
               if (sessionSnapshot.connectionState ==
                   ConnectionState.waiting) {
                 return const Center(
@@ -139,153 +148,167 @@ class AdminDashboardTab extends StatelessWidget {
               final sessions =
                   sessionSnapshot.data?.docs ?? [];
 
-              // ================= SESSION STATISTICS =================
+              // =================================================
+              // SESSION STATISTICS
+              // =================================================
 
-              final totalSessions =
+              final int totalSessions =
                   sessions.length;
 
-              final openSessions =
+              final int openSessions =
                   _countSessions(
                 sessions,
                 "open",
               );
 
-              final fullSessions =
+              final int fullSessions =
                   _countSessions(
                 sessions,
                 "full",
               );
 
-              final completedSessions =
+              final int completedSessions =
                   _countSessions(
                 sessions,
                 "completed",
               );
 
-              final cancelledSessions =
+              final int cancelledSessions =
                   _countSessions(
                 sessions,
                 "cancelled",
               );
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+              // =================================================
+              // DASHBOARD
+              // =================================================
 
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+              return SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
 
-                  children: [
-                    // ================= USER STATISTICS =================
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
 
-                    const Text(
-                      "User Statistics",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    children: [
+                      // =========================================
+                      // USER STATISTICS
+                      // =========================================
+
+                      const Text(
+                        "User Statistics",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 14),
 
-                    AdminStatsGrid(
-                      totalUsers: totalUsers,
-                      mentors: mentors,
-                      mentees: mentees,
-                      pendingApproval:
-                          pendingApproval,
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // ================= SESSION STATISTICS =================
-
-                    const Text(
-                      "Session Statistics",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      AdminStatsGrid(
+                        totalUsers: totalUsers,
+                        mentors: mentors,
+                        mentees: mentees,
+                        pendingApproval:
+                            pendingApproval,
                       ),
-                    ),
 
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 30),
 
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics:
-                          const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.5,
+                      // =========================================
+                      // SESSION STATISTICS
+                      // =========================================
 
-                      children: [
-                        AdminSessionStatCard(
-                          title: "Total Sessions",
-                          value:
-                              totalSessions.toString(),
-                          icon:
-                              Icons.calendar_month_outlined,
+                      const Text(
+                        "Session Statistics",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
 
-                        AdminSessionStatCard(
-                          title: "Open",
-                          value:
-                              openSessions.toString(),
-                          icon:
-                              Icons.lock_open_outlined,
-                        ),
+                      const SizedBox(height: 14),
 
-                        AdminSessionStatCard(
-                          title: "Full",
-                          value:
-                              fullSessions.toString(),
-                          icon:
-                              Icons.group_outlined,
-                        ),
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics:
+                            const NeverScrollableScrollPhysics(),
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.5,
 
-                        AdminSessionStatCard(
-                          title: "Completed",
-                          value:
-                              completedSessions
-                                  .toString(),
-                          icon:
-                              Icons.check_circle_outline,
-                        ),
+                        children: [
+                          AdminSessionStatCard(
+                            title: "Total Sessions",
+                            value:
+                                totalSessions.toString(),
+                            icon: Icons
+                                .calendar_month_outlined,
+                          ),
 
-                        AdminSessionStatCard(
-                          title: "Cancelled",
-                          value:
-                              cancelledSessions
-                                  .toString(),
-                          icon:
-                              Icons.cancel_outlined,
-                        ),
-                      ],
-                    ),
+                          AdminSessionStatCard(
+                            title: "Open",
+                            value:
+                                openSessions.toString(),
+                            icon: Icons
+                                .lock_open_outlined,
+                          ),
 
-                    const SizedBox(height: 30),
+                          AdminSessionStatCard(
+                            title: "Full",
+                            value:
+                                fullSessions.toString(),
+                            icon: Icons
+                                .group_outlined,
+                          ),
 
-                    // ================= PENDING APPROVAL =================
+                          AdminSessionStatCard(
+                            title: "Completed",
+                            value:
+                                completedSessions
+                                    .toString(),
+                            icon: Icons
+                                .check_circle_outline,
+                          ),
 
-                    AdminPendingUsersSection(
-                      users: pendingUsers,
+                          AdminSessionStatCard(
+                            title: "Cancelled",
+                            value:
+                                cancelledSessions
+                                    .toString(),
+                            icon: Icons
+                                .cancel_outlined,
+                          ),
+                        ],
+                      ),
 
-                      onApprove: (uid) {
-                        _updateStatus(
-                          uid,
-                          "approved",
-                        );
-                      },
+                      const SizedBox(height: 30),
 
-                      onReject: (uid) {
-                        _updateStatus(
-                          uid,
-                          "rejected",
-                        );
-                      },
-                    ),
-                  ],
+                      // =========================================
+                      // PENDING APPROVAL
+                      // =========================================
+
+                      AdminPendingUsersSection(
+                        users: pendingUsers,
+
+                        onApprove: (uid) {
+                          _updateStatus(
+                            uid,
+                            "approved",
+                          );
+                        },
+
+                        onReject: (uid) {
+                          _updateStatus(
+                            uid,
+                            "rejected",
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -295,7 +318,9 @@ class AdminDashboardTab extends StatelessWidget {
     );
   }
 
-  // ================= COUNT SESSION =================
+  // =========================================================
+  // COUNT SESSION
+  // =========================================================
 
   static int _countSessions(
     List<QueryDocumentSnapshot> sessions,
@@ -312,7 +337,9 @@ class AdminDashboardTab extends StatelessWidget {
     }).length;
   }
 
-  // ================= UPDATE USER STATUS =================
+  // =========================================================
+  // UPDATE USER STATUS
+  // =========================================================
 
   static Future<void> _updateStatus(
     String uid,
@@ -326,4 +353,3 @@ class AdminDashboardTab extends StatelessWidget {
     });
   }
 }
-

@@ -305,7 +305,7 @@ class _HomeContent extends StatelessWidget {
         // ======================================================
 
         const _SectionTitle(
-          title: 'Upcoming Learning',
+          title: 'lịch học sắp tới',
           icon: Icons.school_outlined,
         ),
 
